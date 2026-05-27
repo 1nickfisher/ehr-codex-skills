@@ -1,0 +1,65 @@
+name: CalMHSA Medi-Cal source check
+
+on:
+  schedule:
+    # Mondays at 14:00 UTC — picks up Friday-afternoon regulator drops.
+    - cron: "0 14 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r skills/calmhsa-medi-cal-documentation/scripts/requirements.txt
+
+      - name: Run source check
+        id: check
+        run: |
+          set +e
+          python skills/calmhsa-medi-cal-documentation/scripts/check_sources.py \
+            skills/calmhsa-medi-cal-documentation \
+            --markdown > /tmp/report.md
+          status=$?
+          set -e
+          echo "exit_code=${status}" >> "$GITHUB_OUTPUT"
+          cat /tmp/report.md
+
+      - name: Build issue body
+        if: steps.check.outputs.exit_code == '2'
+        run: |
+          {
+            echo "A scheduled source check found that one or more authorities cited by skills have changed, gone missing, or are missing a baseline."
+            echo
+            echo "**Do not auto-edit any skill.** Read each changed authority against the current SKILL.md, then either update the skill or — if the skill is still accurate — bump the baseline:"
+            echo
+            echo '```sh'
+            echo 'python skills/<name>/scripts/check_sources.py skills/<name> --write'
+            echo '```'
+            echo
+            echo "## Report"
+            echo
+            cat /tmp/report.md
+          } > /tmp/issue.md
+
+      - name: Open issue on change
+        if: steps.check.outputs.exit_code == '2'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_TITLE_DATE: ${{ github.run_id }}
+        run: |
+          today=$(date -u +%Y-%m-%d)
+          gh issue create \
+            --title "Source change detected — ${today}" \
+            --body-file /tmp/issue.md \
+            --label "source-change"

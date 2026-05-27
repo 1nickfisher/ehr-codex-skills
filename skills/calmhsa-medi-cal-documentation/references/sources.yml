@@ -1,0 +1,153 @@
+schema_version: 1
+
+meta:
+  skill: calmhsa-medi-cal-documentation
+  last_full_review:
+    date: 2026-05-26
+    reviewer: "@nick"
+  fetch_notes: |
+    DHCS hosts BHIN PDFs behind Imperva/Incapsula bot protection. Every
+    direct PDF URL returns a 212-byte JavaScript challenge page regardless
+    of User-Agent, so automated hash comparison against the canonical URLs
+    is not reliable. Those authorities are recorded here as `type: manual`
+    for human reference; verify the BHIN library by hand on each review.
+    If you need a fetchable baseline for a DHCS BHIN, point the URL at a
+    county mirror with stable Last-Modified/ETag headers (Marin BHRS,
+    Alameda BHCS, Solano County QI) and record the mirror URL alongside
+    the canonical one.
+
+    CalMHSA hosts its clinical documentation guides via Cloudflare; those
+    are directly fetchable and have real SHA-256 baselines below.
+
+sources:
+  # ---- CalMHSA practical guidance (fetchable, baselined) ----
+
+  - id: calmhsa-smhs-guide-2026
+    title: "CalMHSA Outpatient SMHS Clinical Documentation Guide (April 2026)"
+    issuer: CalMHSA
+    type: guidance
+    url: https://www.calmhsa.org/wp-content/uploads/2026/04/SMHS-Clinical-Documentation-Guide-04.2026.pdf
+    issued_date: 2026-04-01
+    last_verified_date: 2026-05-26
+    expected_sha256: fb26c1a3f3be8918e08f1e604f15c7c8215bf855f7afb4fcd5e0be8cd4505c76
+    etag: '"69d6e2d7-10f709"'
+    last_modified: "Wed, 08 Apr 2026 23:20:55 GMT"
+
+  - id: calmhsa-sud-guide-2025
+    title: "CalMHSA Outpatient DMC and DMC-ODS Clinical Documentation Guide (April 2025)"
+    issuer: CalMHSA
+    type: guidance
+    url: https://www.calmhsa.org/wp-content/uploads/2025/04/SUD-Clinical-Documentation-Guide-4.25.2025.pdf
+    issued_date: 2025-04-25
+    last_verified_date: 2026-05-26
+    expected_sha256: d6c133158cea9fb992f62c348f1e416a9167616dacc3855c3c57642fd601a32e
+    etag: '"680c0c59-dae22"'
+    last_modified: "Fri, 25 Apr 2025 22:27:37 GMT"
+
+  # ---- DHCS authorities (manual review — Imperva-wrapped, not fetchable) ----
+
+  - id: bhin-23-068
+    title: "DHCS BHIN 23-068 — Documentation Requirements for SMH, DMC, and DMC-ODS Services"
+    issuer: DHCS
+    type: manual
+    url: https://www.dhcs.ca.gov/Documents/BHIN-23-068-Documentation-Requirements-for-SMH-DMC-and-DMC-ODS-Services.pdf
+    issued_date: 2023-11-20
+    effective_date: 2024-01-01
+    supersedes: [bhin-22-019]
+    last_verified_date: 2026-05-26
+    notes: "Floor regulatory document for this skill. Re-verify against the BHIN library quarterly."
+
+  - id: bhin-22-013
+    title: "DHCS BHIN 22-013 — Code Selection Prior to Diagnosis"
+    issuer: DHCS
+    type: manual
+    url: https://www.dhcs.ca.gov/Documents/BHIN-22-013-Code-Selection-Prior-to-Diagnosis.pdf
+    last_verified_date: 2026-05-26
+
+  - id: bhin-22-011
+    title: "DHCS BHIN 22-011 — No Wrong Door for Mental Health Services"
+    issuer: DHCS
+    type: manual
+    last_verified_date: 2026-05-26
+
+  - id: bhin-21-073
+    title: "DHCS BHIN 21-073 — SMHS Access Criteria"
+    issuer: DHCS
+    type: manual
+    last_verified_date: 2026-05-26
+
+  - id: bhin-23-018
+    title: "DHCS BHIN 23-018 — Telehealth Policy"
+    issuer: DHCS
+    type: manual
+    last_verified_date: 2026-05-26
+
+  - id: bhin-25-020
+    title: "DHCS BHIN 25-020 — Screening Tools and Transition of Care Tool"
+    issuer: DHCS
+    type: manual
+    last_verified_date: 2026-05-26
+
+  - id: bhin-24-001
+    title: "DHCS BHIN 24-001 — ASAM Criteria for DMC and DMC-ODS"
+    issuer: DHCS
+    type: manual
+    last_verified_date: 2026-05-26
+
+  - id: bhin-21-001
+    title: "DHCS BHIN 21-001 — DHCS Level of Care Designations for AOD Treatment Facilities"
+    issuer: DHCS
+    type: manual
+    last_verified_date: 2026-05-26
+
+  - id: bhin-23-025
+    title: "DHCS BHIN 23-025 — Mobile Crisis Services"
+    issuer: DHCS
+    type: manual
+    last_verified_date: 2026-05-26
+
+  - id: bhin-23-054
+    title: "DHCS BHIN 23-054 — Medications for Addiction Treatment"
+    issuer: DHCS
+    type: manual
+    last_verified_date: 2026-05-26
+
+  - id: bhin-22-017
+    title: "DHCS BHIN 22-017 — Authorization and Documentation for Psychiatric Inpatient Services"
+    issuer: DHCS
+    type: manual
+    last_verified_date: 2026-05-26
+
+  - id: dhcs-bhin-library
+    title: "DHCS Behavioral Health Information Notice Library"
+    issuer: DHCS
+    type: manual
+    url: https://www.dhcs.ca.gov/formsandpubs/Pages/Behavioral-Health-Information-Notice-(BHIN)-Library.aspx
+    purpose: "Discover newly-published BHINs. Visit quarterly."
+    last_verified_date: 2026-05-26
+
+  # ---- Statutory / regulatory text (manual review) ----
+
+  - id: wi-14184-402
+    title: "Welfare & Institutions Code § 14184.402"
+    type: manual
+    url: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=14184.402.&lawCode=WIC
+    last_verified_date: 2026-05-26
+
+  - id: usc-1396d-r
+    title: "42 U.S.C. § 1396d(r) — EPSDT"
+    type: manual
+    url: https://www.law.cornell.edu/uscode/text/42/1396d
+    last_verified_date: 2026-05-26
+
+  - id: cfr-42-440-169
+    title: "42 CFR § 440.169 — Case management services"
+    type: manual
+    url: https://www.ecfr.gov/current/title-42/chapter-IV/subchapter-C/part-440/subpart-A/section-440.169
+    last_verified_date: 2026-05-26
+
+  - id: cfr-42-438-208
+    title: "42 CFR § 438.208 — Coordination and continuity of care"
+    type: manual
+    url: https://www.ecfr.gov/current/title-42/chapter-IV/subchapter-C/part-438/subpart-D/section-438.208
+    last_verified_date: 2026-05-26

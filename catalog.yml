@@ -1,0 +1,21 @@
+schema_version: 1
+name: ehr-codex-skills
+visibility: private
+description: "Reusable Codex skills for EHR, behavioral-health, and Medi-Cal software work."
+
+skills:
+  - id: calmhsa-medi-cal-documentation
+    path: skills/calmhsa-medi-cal-documentation
+    status: stable
+    version: v0.1.0
+    last_verified: 2026-05-26
+    summary: "California Medi-Cal behavioral health documentation rules for SMHS, DMC, and DMC-ODS workflows."
+    canonical_sources: skills/calmhsa-medi-cal-documentation/references/sources.yml
+
+planned:
+  - id: ehr-release-ops
+    summary: "Release, staging, and operational checks for EHR deployments."
+  - id: sccc-odoo-admin
+    summary: "Administrative workflows for SCCC-style Odoo EHR operations."
+  - id: medi-cal-claims
+    summary: "Medi-Cal behavioral-health claim logic, coding constraints, and audit checks."

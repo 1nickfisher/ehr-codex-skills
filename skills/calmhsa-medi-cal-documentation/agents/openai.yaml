@@ -1,0 +1,7 @@
+interface:
+  display_name: "CalMHSA Medi-Cal Documentation"
+  short_description: "Apply CA Medi-Cal behavioral health documentation rules"
+  default_prompt: "Use $calmhsa-medi-cal-documentation to review this clinical workflow for California Medi-Cal behavioral health documentation requirements."
+
+policy:
+  allow_implicit_invocation: true
