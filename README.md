@@ -58,9 +58,16 @@ git submodule add -b main git@github.com:1nickfisher/ehr-codex-skills.git vendor
 Compliance content rots silently — a regulation changes, the prose stays the same, and the rule quietly stops being right. This repo's defence:
 
 1. Every skill carries a `last_verified` date in its frontmatter metadata.
-2. Every skill has a companion `references/sources.yml` enumerating the regulatory authorities it depends on, with the SHA-256 hash and HTTP `ETag` / `Last-Modified` for each fetchable source.
-3. `skills/<name>/scripts/check_sources.py` fetches each authority, compares hashes, and reports changes.
+2. Every skill has a companion `references/sources.yml` enumerating the regulatory authorities it depends on, with a baseline for each automatable source.
+3. `skills/<name>/scripts/check_sources.py` fetches each authority, compares baselines, and reports changes.
 4. A weekly GitHub Action runs the check and **opens an issue** when an authority changes — it never auto-edits a skill. A human reads the new authority and decides what (if anything) needs updating.
+
+Supported source types:
+
+- Direct fetchable sources use `expected_sha256` plus HTTP `ETag` / `Last-Modified` when available.
+- DHCS PDFs that are bot-protected at the origin can use `type: wayback`; the checker reads the Internet Archive CDX API and treats a new archive digest as a human-review signal.
+- eCFR sections can use `type: ecfr`; the checker reads the eCFR API's latest issue date and hashes the cited section XML.
+- Sources that cannot be checked safely remain `type: manual`.
 
 Run locally:
 
@@ -73,6 +80,27 @@ After a human review confirms the skill is still accurate (or has been updated),
 ```sh
 python3 skills/calmhsa-medi-cal-documentation/scripts/check_sources.py skills/calmhsa-medi-cal-documentation --write
 ```
+
+To ask Internet Archive to refresh Wayback coverage during a manual run:
+
+```sh
+python3 skills/calmhsa-medi-cal-documentation/scripts/check_sources.py skills/calmhsa-medi-cal-documentation --request-wayback-save
+```
+
+### Email alerts
+
+When the weekly source check detects a changed, missing, or unreachable source, the GitHub Action opens an issue. It can also send an SMTP email if these repository secrets are configured:
+
+| Secret | Purpose |
+|---|---|
+| `SOURCE_ALERT_SMTP_HOST` | SMTP server hostname. |
+| `SOURCE_ALERT_SMTP_PORT` | SMTP port; defaults to `587` when unset. Use `465` for implicit TLS. |
+| `SOURCE_ALERT_SMTP_USERNAME` | SMTP username. |
+| `SOURCE_ALERT_SMTP_PASSWORD` | SMTP password or provider API key. |
+| `SOURCE_ALERT_EMAIL_TO` | Alert recipient email address. |
+| `SOURCE_ALERT_EMAIL_FROM` | Sender address accepted by the SMTP provider. |
+
+If any required email secret is missing, the workflow still opens the GitHub issue and logs that email delivery was skipped.
 
 ## License
 

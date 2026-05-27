@@ -21,9 +21,11 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import sys
 from datetime import date
 from pathlib import Path
+from urllib.parse import quote, urlencode
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
@@ -40,6 +42,11 @@ USER_AGENT = (
     "Mozilla/5.0 (compatible; ehr-codex-skills source-checker; "
     "+https://github.com/) Safari/605"
 )
+WAYBACK_CDX_URL = "https://web.archive.org/cdx/search/cdx"
+WAYBACK_WEB_URL = "https://web.archive.org/web"
+WAYBACK_SAVE_URL = "https://web.archive.org/save"
+ECFR_VERSIONS_URL = "https://www.ecfr.gov/api/versioner/v1/versions"
+ECFR_FULL_URL = "https://www.ecfr.gov/api/versioner/v1/full"
 
 
 def fetch(url: str, expected_type: str | None = None, timeout: int = 60) -> dict:
@@ -73,7 +80,192 @@ def fetch(url: str, expected_type: str | None = None, timeout: int = 60) -> dict
         }
 
 
-def check_skill(skill_dir: Path, write: bool = False) -> dict:
+def fetch_wayback_latest(url: str, from_timestamp: str | None = None) -> dict:
+    params = {
+        "url": url,
+        "output": "json",
+        "limit": "-5",
+        "fl": "timestamp,original,mimetype,statuscode,digest,length",
+        "filter": ["statuscode:200", "mimetype:application/pdf"],
+    }
+    if from_timestamp:
+        params["from"] = from_timestamp
+
+    endpoint = f"{WAYBACK_CDX_URL}?{urlencode(params, doseq=True)}"
+    req = Request(endpoint, headers={"User-Agent": USER_AGENT})
+    with urlopen(req, timeout=60) as resp:
+        body = resp.read().decode("utf-8")
+
+    rows = json.loads(body) if body.strip() else []
+    if not rows or len(rows) == 1:
+        return {"status": "wayback_no_snapshot", "cdx_url": endpoint}
+
+    latest = rows[-1]
+    return {
+        "status": "ok",
+        "cdx_url": endpoint,
+        "timestamp": latest[0],
+        "original": latest[1],
+        "mimetype": latest[2],
+        "statuscode": latest[3],
+        "digest": latest[4],
+        "length": latest[5],
+    }
+
+
+def fetch_wayback_archived_hash(url: str, timestamp: str) -> dict:
+    archived_url = f"{WAYBACK_WEB_URL}/{timestamp}id_/{quote(url, safe=':/?&=%')}"
+    req = Request(archived_url, headers={"User-Agent": USER_AGENT})
+    with urlopen(req, timeout=60) as resp:
+        body = resp.read()
+        return {
+            "url": archived_url,
+            "sha256": hashlib.sha256(body).hexdigest(),
+            "bytes": len(body),
+            "content_type": (resp.headers.get("Content-Type") or "").lower(),
+        }
+
+
+def request_wayback_save(url: str) -> None:
+    save_url = f"{WAYBACK_SAVE_URL}/{quote(url, safe=':/?&=%')}"
+    req = Request(save_url, headers={"User-Agent": USER_AGENT})
+    with urlopen(req, timeout=60) as resp:
+        resp.read()
+
+
+def check_wayback_source(
+    src: dict,
+    sid: str,
+    today: str,
+    write: bool,
+    should_request_save: bool = False,
+) -> dict | None:
+    url = src.get("url")
+    if not url:
+        return {"id": sid, "status": "no_url"}
+
+    current = fetch_wayback_latest(url, src.get("wayback_timestamp"))
+    if current["status"] != "ok":
+        return {"id": sid, "status": current["status"], "url": url}
+
+    if should_request_save:
+        request_wayback_save(url)
+
+    expected_digest = src.get("wayback_digest")
+    expected_timestamp = src.get("wayback_timestamp")
+    if expected_digest and current["digest"] != expected_digest:
+        change = {
+            "id": sid,
+            "status": "wayback_candidate_changed",
+            "url": url,
+            "old_digest": expected_digest,
+            "new_digest": current["digest"],
+            "old_timestamp": expected_timestamp,
+            "new_timestamp": current["timestamp"],
+            "mimetype": current["mimetype"],
+            "length": current["length"],
+            "note": "Wayback observed a new archived payload. Human review required.",
+        }
+    elif not expected_digest:
+        change = {
+            "id": sid,
+            "status": "missing_wayback_baseline",
+            "url": url,
+            "new_digest": current["digest"],
+            "new_timestamp": current["timestamp"],
+            "mimetype": current["mimetype"],
+            "length": current["length"],
+        }
+    else:
+        change = None
+
+    if write:
+        archived = fetch_wayback_archived_hash(url, current["timestamp"])
+        src["wayback_digest"] = current["digest"]
+        src["wayback_timestamp"] = current["timestamp"]
+        src["wayback_mimetype"] = current["mimetype"]
+        src["wayback_length"] = current["length"]
+        src["wayback_archived_sha256"] = archived["sha256"]
+        src["wayback_archived_url"] = archived["url"]
+        src["last_verified_date"] = today
+
+    return change
+
+
+def fetch_ecfr_section(title: str, part: str, section: str) -> dict:
+    versions_url = f"{ECFR_VERSIONS_URL}/title-{title}"
+    req = Request(versions_url, headers={"User-Agent": USER_AGENT})
+    with urlopen(req, timeout=60) as resp:
+        versions = json.loads(resp.read().decode("utf-8"))
+
+    latest_date = versions.get("meta", {}).get("latest_issue_date")
+    if not latest_date:
+        raise ValueError(f"eCFR title {title} did not return latest_issue_date")
+
+    full_url = f"{ECFR_FULL_URL}/{latest_date}/title-{title}.xml?part={part}"
+    req = Request(full_url, headers={"User-Agent": USER_AGENT})
+    with urlopen(req, timeout=60) as resp:
+        xml = resp.read().decode("utf-8")
+
+    match = re.search(
+        rf'(<DIV\d+\s+N="{re.escape(section)}"\s+TYPE="SECTION"[\s\S]*?</DIV\d+>)',
+        xml,
+    )
+    if not match:
+        raise ValueError(f"eCFR section {title} CFR {section} not found in part {part}")
+
+    section_xml = match.group(1).encode("utf-8")
+    return {
+        "date": latest_date,
+        "url": full_url,
+        "sha256": hashlib.sha256(section_xml).hexdigest(),
+        "bytes": len(section_xml),
+    }
+
+
+def check_ecfr_source(src: dict, sid: str, today: str, write: bool) -> dict | None:
+    title = str(src.get("ecfr_title") or "")
+    part = str(src.get("ecfr_part") or "")
+    section = str(src.get("ecfr_section") or "")
+    if not title or not part or not section:
+        return {"id": sid, "status": "missing_ecfr_fields"}
+
+    current = fetch_ecfr_section(title, part, section)
+    expected = src.get("ecfr_sha256")
+    if expected and current["sha256"] != expected:
+        change = {
+            "id": sid,
+            "status": "changed",
+            "old_hash": expected,
+            "new_hash": current["sha256"],
+            "ecfr_date": current["date"],
+            "url": current["url"],
+        }
+    elif not expected:
+        change = {
+            "id": sid,
+            "status": "missing_ecfr_baseline",
+            "new_hash": current["sha256"],
+            "ecfr_date": current["date"],
+            "url": current["url"],
+        }
+    else:
+        change = None
+
+    if write:
+        src["ecfr_sha256"] = current["sha256"]
+        src["ecfr_date"] = current["date"]
+        src["ecfr_bytes"] = current["bytes"]
+        src["last_verified_date"] = today
+
+    return change
+
+
+def check_skill(
+    skill_dir: Path,
+    write: bool = False,
+    request_wayback_save: bool = False,
+) -> dict:
     sources_path = skill_dir / "references" / "sources.yml"
     if not sources_path.exists():
         sources_path = skill_dir / "sources.yml"
@@ -98,6 +290,34 @@ def check_skill(skill_dir: Path, write: bool = False) -> dict:
             # bot-protected, statute in an aspx viewer). Skip but count as
             # checked — the source-of-truth is the cited human-review
             # process, not an automated hash.
+            continue
+
+        if src.get("type") == "wayback":
+            try:
+                change = check_wayback_source(
+                    src,
+                    sid,
+                    today,
+                    write,
+                    should_request_save=request_wayback_save,
+                )
+            except (URLError, HTTPError, TimeoutError, json.JSONDecodeError) as e:
+                changes.append(
+                    {"id": sid, "status": "wayback_unreachable", "error": str(e)}
+                )
+                continue
+            if change:
+                changes.append(change)
+            continue
+
+        if src.get("type") == "ecfr":
+            try:
+                change = check_ecfr_source(src, sid, today, write)
+            except (URLError, HTTPError, TimeoutError, json.JSONDecodeError, ValueError) as e:
+                changes.append({"id": sid, "status": "ecfr_unreachable", "error": str(e)})
+                continue
+            if change:
+                changes.append(change)
             continue
 
         if not url:
@@ -228,6 +448,11 @@ def main() -> int:
         help="Update references/sources.yml with current hashes/etags. "
         "Use only after a human has reviewed each change.",
     )
+    p.add_argument(
+        "--request-wayback-save",
+        action="store_true",
+        help="For wayback sources, ask Internet Archive Save Page Now to capture the canonical URL.",
+    )
     fmt = p.add_mutually_exclusive_group()
     fmt.add_argument("--json", action="store_true", help="Emit JSON.")
     fmt.add_argument("--markdown", action="store_true", help="Emit Markdown.")
@@ -242,7 +467,13 @@ def main() -> int:
         if not path.is_dir():
             reports.append({"skill": path.name, "error": "not a directory"})
             continue
-        reports.append(check_skill(path, write=args.write))
+        reports.append(
+            check_skill(
+                path,
+                write=args.write,
+                request_wayback_save=args.request_wayback_save,
+            )
+        )
 
     if args.json:
         print(json.dumps(reports, indent=2))

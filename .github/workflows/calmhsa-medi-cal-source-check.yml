@@ -5,6 +5,15 @@ on:
     # Mondays at 14:00 UTC — picks up Friday-afternoon regulator drops.
     - cron: "0 14 * * 1"
   workflow_dispatch:
+    inputs:
+      request_wayback_save:
+        description: "Ask Internet Archive Save Page Now to refresh Wayback-covered DHCS PDFs"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
 
 permissions:
   contents: read
@@ -27,9 +36,14 @@ jobs:
         id: check
         run: |
           set +e
-          python skills/calmhsa-medi-cal-documentation/scripts/check_sources.py \
+          extra_args=""
+          if [ "${{ github.event.inputs.request_wayback_save }}" = "true" ]; then
+            extra_args="--request-wayback-save"
+          fi
+          python3 skills/calmhsa-medi-cal-documentation/scripts/check_sources.py \
             skills/calmhsa-medi-cal-documentation \
-            --markdown > /tmp/report.md
+            --markdown \
+            ${extra_args} > /tmp/report.md
           status=$?
           set -e
           echo "exit_code=${status}" >> "$GITHUB_OUTPUT"
@@ -44,7 +58,7 @@ jobs:
             echo "**Do not auto-edit any skill.** Read each changed authority against the current SKILL.md, then either update the skill or — if the skill is still accurate — bump the baseline:"
             echo
             echo '```sh'
-            echo 'python skills/<name>/scripts/check_sources.py skills/<name> --write'
+            echo 'python3 skills/<name>/scripts/check_sources.py skills/<name> --write'
             echo '```'
             echo
             echo "## Report"
@@ -53,13 +67,94 @@ jobs:
           } > /tmp/issue.md
 
       - name: Open issue on change
+        id: open_issue
         if: steps.check.outputs.exit_code == '2'
         env:
           GH_TOKEN: ${{ github.token }}
           ISSUE_TITLE_DATE: ${{ github.run_id }}
         run: |
           today=$(date -u +%Y-%m-%d)
-          gh issue create \
+          issue_url=$(gh issue create \
             --title "Source change detected — ${today}" \
             --body-file /tmp/issue.md \
-            --label "source-change"
+            --label "source-change")
+          echo "issue_url=${issue_url}" >> "$GITHUB_OUTPUT"
+
+      - name: Send email alert
+        if: steps.check.outputs.exit_code == '2'
+        env:
+          SMTP_HOST: ${{ secrets.SOURCE_ALERT_SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SOURCE_ALERT_SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SOURCE_ALERT_SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SOURCE_ALERT_SMTP_PASSWORD }}
+          ALERT_EMAIL_TO: ${{ secrets.SOURCE_ALERT_EMAIL_TO }}
+          ALERT_EMAIL_FROM: ${{ secrets.SOURCE_ALERT_EMAIL_FROM }}
+          ISSUE_URL: ${{ steps.open_issue.outputs.issue_url }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import smtplib
+          import ssl
+          from datetime import date
+          from email.message import EmailMessage
+
+          required = [
+              "SOURCE_ALERT_SMTP_HOST",
+              "SOURCE_ALERT_SMTP_USERNAME",
+              "SOURCE_ALERT_SMTP_PASSWORD",
+              "SOURCE_ALERT_EMAIL_TO",
+              "SOURCE_ALERT_EMAIL_FROM",
+          ]
+          env_map = {
+              "SOURCE_ALERT_SMTP_HOST": "SMTP_HOST",
+              "SOURCE_ALERT_SMTP_USERNAME": "SMTP_USERNAME",
+              "SOURCE_ALERT_SMTP_PASSWORD": "SMTP_PASSWORD",
+              "SOURCE_ALERT_EMAIL_TO": "ALERT_EMAIL_TO",
+              "SOURCE_ALERT_EMAIL_FROM": "ALERT_EMAIL_FROM",
+          }
+          missing = [name for name in required if not os.environ.get(env_map[name])]
+          if missing:
+              print(
+                  "Email alert skipped; missing repository secrets: "
+                  + ", ".join(missing)
+              )
+              raise SystemExit(0)
+
+          smtp_host = os.environ["SMTP_HOST"]
+          smtp_port = int(os.environ.get("SMTP_PORT") or "587")
+          smtp_username = os.environ["SMTP_USERNAME"]
+          smtp_password = os.environ["SMTP_PASSWORD"]
+          alert_to = os.environ["ALERT_EMAIL_TO"]
+          alert_from = os.environ["ALERT_EMAIL_FROM"]
+          issue_url = os.environ.get("ISSUE_URL") or "(issue URL unavailable)"
+
+          report = open("/tmp/report.md", encoding="utf-8").read()
+          today = date.today().isoformat()
+
+          msg = EmailMessage()
+          msg["Subject"] = f"EHR Codex skill source change detected - {today}"
+          msg["From"] = alert_from
+          msg["To"] = alert_to
+          msg.set_content(
+              "The CalMHSA Medi-Cal source-check workflow detected a source update.\n\n"
+              f"Issue: {issue_url}\n\n"
+              "Report:\n"
+              f"{report}"
+          )
+
+          if smtp_port == 465:
+              with smtplib.SMTP_SSL(
+                  smtp_host, smtp_port, timeout=30, context=ssl.create_default_context()
+              ) as smtp:
+                  smtp.login(smtp_username, smtp_password)
+                  smtp.send_message(msg)
+          else:
+              with smtplib.SMTP(smtp_host, smtp_port, timeout=30) as smtp:
+                  smtp.ehlo()
+                  smtp.starttls(context=ssl.create_default_context())
+                  smtp.ehlo()
+                  smtp.login(smtp_username, smtp_password)
+                  smtp.send_message(msg)
+
+          print(f"Email alert sent to {alert_to}")
+          PY

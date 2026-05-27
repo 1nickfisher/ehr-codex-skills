@@ -6,15 +6,14 @@ meta:
     date: 2026-05-26
     reviewer: "@nick"
   fetch_notes: |
-    DHCS hosts BHIN PDFs behind Imperva/Incapsula bot protection. Every
-    direct PDF URL returns a 212-byte JavaScript challenge page regardless
+    DHCS hosts many BHIN PDFs behind Imperva/Incapsula bot protection. Every
+    direct PDF URL can return a small JavaScript challenge page regardless
     of User-Agent, so automated hash comparison against the canonical URLs
-    is not reliable. Those authorities are recorded here as `type: manual`
-    for human reference; verify the BHIN library by hand on each review.
-    If you need a fetchable baseline for a DHCS BHIN, point the URL at a
-    county mirror with stable Last-Modified/ETag headers (Marin BHRS,
-    Alameda BHCS, Solano County QI) and record the mirror URL alongside
-    the canonical one.
+    is not reliable. For DHCS PDFs with verified Wayback Machine PDF captures,
+    use `type: wayback` and compare the Internet Archive CDX digest plus the
+    archived-byte SHA-256. Treat any digest change as a review signal, not as
+    proof that the regulation changed. DHCS authorities without verified
+    canonical PDF URLs remain `type: manual`.
 
     CalMHSA hosts its clinical documentation guides via Cloudflare; those
     are directly fetchable and have real SHA-256 baselines below.
@@ -49,12 +48,18 @@ sources:
   - id: bhin-23-068
     title: "DHCS BHIN 23-068 — Documentation Requirements for SMH, DMC, and DMC-ODS Services"
     issuer: DHCS
-    type: manual
+    type: wayback
     url: https://www.dhcs.ca.gov/Documents/BHIN-23-068-Documentation-Requirements-for-SMH-DMC-and-DMC-ODS-Services.pdf
     issued_date: 2023-11-20
     effective_date: 2024-01-01
     supersedes: [bhin-22-019]
-    last_verified_date: 2026-05-26
+    last_verified_date: 2026-05-27
+    wayback_timestamp: "20251025132431"
+    wayback_digest: F3BAXR7VLE6GR2QGMUS2V4MLGXWQYWSF
+    wayback_mimetype: application/pdf
+    wayback_length: "297469"
+    wayback_archived_sha256: be25935eb605297fb741ef9d02e7dbb5f4d24cfcf0bcdb8f99de2b4c51205ba4
+    wayback_archived_url: https://web.archive.org/web/20251025132431id_/https://www.dhcs.ca.gov/Documents/BHIN-23-068-Documentation-Requirements-for-SMH-DMC-and-DMC-ODS-Services.pdf
     notes: "Floor regulatory document for this skill. Re-verify against the BHIN library quarterly."
 
   - id: bhin-22-013
@@ -79,8 +84,15 @@ sources:
   - id: bhin-23-018
     title: "DHCS BHIN 23-018 — Telehealth Policy"
     issuer: DHCS
-    type: manual
-    last_verified_date: 2026-05-26
+    type: wayback
+    url: https://www.dhcs.ca.gov/Documents/BHIN-23-018-Updated-Telehealth-Guidance-for-SMHS-and-SUD-Treatment-Servies-in-Medi-Cal.pdf
+    last_verified_date: 2026-05-27
+    wayback_timestamp: "20251212065525"
+    wayback_digest: OIGPPESTDJAWEONF5XANSBFGGCOWSP5Q
+    wayback_mimetype: application/pdf
+    wayback_length: "205684"
+    wayback_archived_sha256: ea1946e47f342cd7adc5c67008e31fbe2c8fe946e6562cea3723d665900fae3d
+    wayback_archived_url: https://web.archive.org/web/20251212065525id_/https://www.dhcs.ca.gov/Documents/BHIN-23-018-Updated-Telehealth-Guidance-for-SMHS-and-SUD-Treatment-Servies-in-Medi-Cal.pdf
 
   - id: bhin-25-020
     title: "DHCS BHIN 25-020 — Screening Tools and Transition of Care Tool"
@@ -142,12 +154,24 @@ sources:
 
   - id: cfr-42-440-169
     title: "42 CFR § 440.169 — Case management services"
-    type: manual
+    type: ecfr
     url: https://www.ecfr.gov/current/title-42/chapter-IV/subchapter-C/part-440/subpart-A/section-440.169
-    last_verified_date: 2026-05-26
+    ecfr_title: "42"
+    ecfr_part: "440"
+    ecfr_section: "440.169"
+    ecfr_date: "2026-05-20"
+    ecfr_sha256: d7a6990b8e3189db5df44d5e2ace89239cc6fa3862f5d1daa83aa7828c0c519e
+    ecfr_bytes: 4079
+    last_verified_date: 2026-05-27
 
   - id: cfr-42-438-208
     title: "42 CFR § 438.208 — Coordination and continuity of care"
-    type: manual
+    type: ecfr
     url: https://www.ecfr.gov/current/title-42/chapter-IV/subchapter-C/part-438/subpart-D/section-438.208
-    last_verified_date: 2026-05-26
+    ecfr_title: "42"
+    ecfr_part: "438"
+    ecfr_section: "438.208"
+    ecfr_date: "2026-05-20"
+    ecfr_sha256: 011c324a97809183c83463cce03e48c9d938ae03e740f3146079de026b990a1e
+    ecfr_bytes: 6868
+    last_verified_date: 2026-05-27
