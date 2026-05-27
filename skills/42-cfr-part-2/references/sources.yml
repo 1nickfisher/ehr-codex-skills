@@ -1,0 +1,315 @@
+schema_version: 1
+
+meta:
+  skill: 42-cfr-part-2
+  last_full_review:
+    date: 2026-05-27
+    reviewer: "@nick"
+  fetch_notes: |
+    The 2024 final rule (89 FR 12472) and the current 42 CFR Part 2 text are
+    both directly fetchable:
+      - govinfo.gov hosts the final-rule PDF (Cloudflare-served, real ETag).
+      - The eCFR API exposes both the live Part 2 text and individual section
+        XML. Section-level `type: ecfr` baselines give targeted change signals.
+
+    The cross-referenced HIPAA sections (45 CFR §§ 164.404, 164.408, 164.514,
+    164.522, 164.528, 160.404) are tracked the same way — section-level eCFR
+    baselines.
+
+    HHS / SAMHSA fact-sheet pages are Akamai-protected at the origin and
+    cannot be hashed directly. The existing Wayback branch of check_sources.py
+    filters CDX results to mimetype=application/pdf, so HTML-only HHS pages
+    are not yet a viable `type: wayback` baseline — kept manual until the
+    checker grows a text/html Wayback branch, or until each page has a
+    Wayback-captured PDF/print variant.
+
+    Statutory text (42 U.S.C. § 290dd-2, § 1320d-6) lives at law.cornell.edu
+    in a format that does not have a stable extractable section anchor for
+    automated hashing — kept as `type: manual` for now.
+
+sources:
+  # ---- 42 CFR Part 2 — section-level eCFR baselines ----
+
+  - id: cfr-42-2-11
+    title: "42 CFR § 2.11 — Definitions"
+    issuer: SAMHSA
+    type: ecfr
+    url: https://www.ecfr.gov/current/title-42/chapter-I/subchapter-A/part-2/subpart-A/section-2.11
+    ecfr_title: "42"
+    ecfr_part: "2"
+    ecfr_section: "2.11"
+    ecfr_date: "2026-05-20"
+    ecfr_sha256: 299f68a74e0522bd41374895c50e588fa2df85872a5cd914d008aaf9d08c253e
+    ecfr_bytes: 12794
+    last_verified_date: 2026-05-27
+
+  - id: cfr-42-2-12
+    title: "42 CFR § 2.12 — Applicability"
+    issuer: SAMHSA
+    type: ecfr
+    url: https://www.ecfr.gov/current/title-42/chapter-I/subchapter-A/part-2/subpart-A/section-2.12
+    ecfr_title: "42"
+    ecfr_part: "2"
+    ecfr_section: "2.12"
+    ecfr_date: "2026-05-20"
+    ecfr_sha256: da0db4ff8e5881a57e2123f9b59c4c4d3e1deed6f5f7e43620d491bd540f1bc2
+    ecfr_bytes: 14156
+    last_verified_date: 2026-05-27
+
+  - id: cfr-42-2-16
+    title: "42 CFR § 2.16 — Security for records and notification of breaches"
+    issuer: SAMHSA
+    type: ecfr
+    url: https://www.ecfr.gov/current/title-42/chapter-I/subchapter-A/part-2/subpart-B/section-2.16
+    ecfr_title: "42"
+    ecfr_part: "2"
+    ecfr_section: "2.16"
+    ecfr_date: "2026-05-20"
+    ecfr_sha256: 9031c638d46587780334bc971718c01b7f070191865815ec282eb185ad155594
+    ecfr_bytes: 2778
+    last_verified_date: 2026-05-27
+
+  - id: cfr-42-2-22
+    title: "42 CFR § 2.22 — Notice to patients of federal confidentiality requirements"
+    issuer: SAMHSA
+    type: ecfr
+    url: https://www.ecfr.gov/current/title-42/chapter-I/subchapter-A/part-2/subpart-B/section-2.22
+    ecfr_title: "42"
+    ecfr_part: "2"
+    ecfr_section: "2.22"
+    ecfr_date: "2026-05-20"
+    ecfr_sha256: 31debd8c1e20aba421faa15cb2a50ca50469c9672566f9d25ceb4cc973bfceec
+    ecfr_bytes: 11609
+    last_verified_date: 2026-05-27
+
+  - id: cfr-42-2-31
+    title: "42 CFR § 2.31 — Consent requirements"
+    issuer: SAMHSA
+    type: ecfr
+    url: https://www.ecfr.gov/current/title-42/chapter-I/subchapter-A/part-2/subpart-C/section-2.31
+    ecfr_title: "42"
+    ecfr_part: "2"
+    ecfr_section: "2.31"
+    ecfr_date: "2026-05-20"
+    ecfr_sha256: 8d08369ad0af43d85811d8af6660a5b4fd75d1e14498cab9eaeb29df66ab9ed7
+    ecfr_bytes: 7182
+    last_verified_date: 2026-05-27
+
+  - id: cfr-42-2-32
+    title: "42 CFR § 2.32 — Notice to accompany disclosure"
+    issuer: SAMHSA
+    type: ecfr
+    url: https://www.ecfr.gov/current/title-42/chapter-I/subchapter-A/part-2/subpart-C/section-2.32
+    ecfr_title: "42"
+    ecfr_part: "2"
+    ecfr_section: "2.32"
+    ecfr_date: "2026-05-20"
+    ecfr_sha256: ab117373ee45102fff8679752482a1980405f39a02de284fde348cd815d07b17
+    ecfr_bytes: 2179
+    last_verified_date: 2026-05-27
+
+  - id: cfr-42-2-33
+    title: "42 CFR § 2.33 — Uses and disclosures permitted with written consent"
+    issuer: SAMHSA
+    type: ecfr
+    url: https://www.ecfr.gov/current/title-42/chapter-I/subchapter-A/part-2/subpart-C/section-2.33
+    ecfr_title: "42"
+    ecfr_part: "2"
+    ecfr_section: "2.33"
+    ecfr_date: "2026-05-20"
+    ecfr_sha256: 340c16e234b9378bbd507f91bdf036308d933ab344eaa6ea2bc795170b6f9134
+    ecfr_bytes: 3980
+    last_verified_date: 2026-05-27
+
+  - id: cfr-42-2-51
+    title: "42 CFR § 2.51 — Medical emergencies"
+    issuer: SAMHSA
+    type: ecfr
+    url: https://www.ecfr.gov/current/title-42/chapter-I/subchapter-A/part-2/subpart-D/section-2.51
+    ecfr_title: "42"
+    ecfr_part: "2"
+    ecfr_section: "2.51"
+    ecfr_date: "2026-05-20"
+    ecfr_sha256: 00ed4298318d28e991abb35f1a4bc6af671222fa89a4f8715714d4c4dc950f59
+    ecfr_bytes: 1921
+    last_verified_date: 2026-05-27
+
+  - id: cfr-42-2-61
+    title: "42 CFR § 2.61 — Legal effect of order (court orders)"
+    issuer: SAMHSA
+    type: ecfr
+    url: https://www.ecfr.gov/current/title-42/chapter-I/subchapter-A/part-2/subpart-E/section-2.61
+    ecfr_title: "42"
+    ecfr_part: "2"
+    ecfr_section: "2.61"
+    ecfr_date: "2026-05-20"
+    ecfr_sha256: 25455a164fcb4059a4adc76f6b5da654c268dc607011aa167934e37342f15dbc
+    ecfr_bytes: 1734
+    last_verified_date: 2026-05-27
+
+  - id: cfr-42-2-65
+    title: "42 CFR § 2.65 — Procedures and criteria for orders authorizing disclosures to investigate or prosecute a patient"
+    issuer: SAMHSA
+    type: ecfr
+    url: https://www.ecfr.gov/current/title-42/chapter-I/subchapter-A/part-2/subpart-E/section-2.65
+    ecfr_title: "42"
+    ecfr_part: "2"
+    ecfr_section: "2.65"
+    ecfr_date: "2026-05-20"
+    ecfr_sha256: a606b04b921c7509632c6d0fd06d4cebb0b9be5a87364db5e0df05a16d86a80b
+    ecfr_bytes: 4872
+    last_verified_date: 2026-05-27
+
+  # ---- HIPAA cross-references applied to Part 2 by the 2024 final rule ----
+
+  - id: cfr-45-164-404
+    title: "45 CFR § 164.404 — Notification to individuals (HIPAA Breach Notification Rule)"
+    issuer: HHS OCR
+    type: ecfr
+    url: https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-C/part-164/subpart-D/section-164.404
+    ecfr_title: "45"
+    ecfr_part: "164"
+    ecfr_section: "164.404"
+    ecfr_date: "2026-05-20"
+    ecfr_sha256: 4d6e7a471a693093726d9e8e94112c275f2f5869ba16c02df79bee34e561e3b6
+    ecfr_bytes: 5596
+    last_verified_date: 2026-05-27
+
+  - id: cfr-45-164-408
+    title: "45 CFR § 164.408 — Notification to the Secretary"
+    issuer: HHS OCR
+    type: ecfr
+    url: https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-C/part-164/subpart-D/section-164.408
+    ecfr_title: "45"
+    ecfr_part: "164"
+    ecfr_section: "164.408"
+    ecfr_date: "2026-05-20"
+    ecfr_sha256: ef0d481b5490e927560aff9e2029ae6e4d2d10dd69c469d08a9f6a1bb4a724ed
+    ecfr_bytes: 1456
+    last_verified_date: 2026-05-27
+
+  - id: cfr-45-164-514
+    title: "45 CFR § 164.514 — Other requirements relating to uses and disclosures (de-identification standards)"
+    issuer: HHS OCR
+    type: ecfr
+    url: https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-C/part-164/subpart-E/section-164.514
+    ecfr_title: "45"
+    ecfr_part: "164"
+    ecfr_section: "164.514"
+    ecfr_date: "2026-05-20"
+    ecfr_sha256: 997741d4d51f8f0514f0449ae1f8e58efaffc9d2cc11546aeff602f4bf03a925
+    ecfr_bytes: 19572
+    last_verified_date: 2026-05-27
+
+  - id: cfr-45-164-522
+    title: "45 CFR § 164.522 — Rights to request privacy protection for protected health information"
+    issuer: HHS OCR
+    type: ecfr
+    url: https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-C/part-164/subpart-E/section-164.522
+    ecfr_title: "45"
+    ecfr_part: "164"
+    ecfr_section: "164.522"
+    ecfr_date: "2026-05-20"
+    ecfr_sha256: b75b88d24118f78d22d4c8ccaa0237994d01d0542fe13c5997e401136d786e3a
+    ecfr_bytes: 5010
+    last_verified_date: 2026-05-27
+
+  - id: cfr-45-164-528
+    title: "45 CFR § 164.528 — Accounting of disclosures of protected health information"
+    issuer: HHS OCR
+    type: ecfr
+    url: https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-C/part-164/subpart-E/section-164.528
+    ecfr_title: "45"
+    ecfr_part: "164"
+    ecfr_section: "164.528"
+    ecfr_date: "2026-05-20"
+    ecfr_sha256: cb8d0c5e5030bfe62a186a124d07d6dc9643b0e139b546e74d11c9d86662a345
+    ecfr_bytes: 5290
+    last_verified_date: 2026-05-27
+
+  - id: cfr-45-160-404
+    title: "45 CFR § 160.404 — Amount of a civil money penalty (HITECH tiers)"
+    issuer: HHS OCR
+    type: ecfr
+    url: https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-C/part-160/subpart-D/section-160.404
+    ecfr_title: "45"
+    ecfr_part: "160"
+    ecfr_section: "160.404"
+    ecfr_date: "2026-05-20"
+    ecfr_sha256: 3b6d4a185d3517e36a49a69b800b2f0db697b5aa01920ffc0ca6937e5017c3b6
+    ecfr_bytes: 4063
+    last_verified_date: 2026-05-27
+
+  # ---- Federal Register final rule (fetchable, canonical) ----
+
+  - id: fr-2024-02544-pdf
+    title: "Federal Register: Confidentiality of SUD Patient Records — Final Rule (89 FR 12472)"
+    issuer: HHS / SAMHSA / OCR
+    type: regulatory
+    url: https://www.govinfo.gov/content/pkg/FR-2024-02-16/pdf/2024-02544.pdf
+    document_number: "2024-02544"
+    rin: "0945-AA16"
+    citation: "89 FR 12472"
+    publication_date: 2024-02-16
+    effective_date: 2024-04-16
+    compliance_date: 2026-02-16
+    expected_sha256: ad3bcb8513b1bd378829fa7afd696a5a482f5a29f932fed25ff89d61b1e29b49
+    last_modified: "Wed, 24 Sep 2025 19:47:07 GMT"
+    last_verified_date: 2026-05-27
+
+  - id: fr-2024-02544-metadata
+    title: "Federal Register API metadata for 2024-02544"
+    issuer: Federal Register
+    type: regulatory
+    url: https://www.federalregister.gov/api/v1/documents/2024-02544.json
+    notes: "Stable JSON metadata: citation, dates, agencies, RIN, html_url, pdf_url."
+    expected_sha256: 948b682f2fffbc530233ece08f43af502f60122518a8130db1c76e2d4db06f73
+    last_verified_date: 2026-05-27
+
+  - id: govinfo-cfr-2024-part-2
+    title: "Annual CFR 2024 Edition — Title 42 Vol. 1 Part 2 (XML)"
+    issuer: GPO / govinfo.gov
+    type: regulatory
+    url: https://www.govinfo.gov/content/pkg/CFR-2024-title42-vol1/xml/CFR-2024-title42-vol1-part2.xml
+    notes: "Annual edition mirror; stable historical baseline."
+    expected_sha256: d39ffa9ab50cc24df34e3cd02a672ac0d770718af72e27a0d01ebc42fabfa889
+    last_modified: "Thu, 15 May 2025 21:40:09 GMT"
+    last_verified_date: 2026-05-27
+
+  # ---- HHS / SAMHSA practical guidance (manual until Wayback supports HTML) ----
+
+  - id: hhs-part2-fact-sheet
+    title: "HHS Fact Sheet — 42 CFR Part 2 Final Rule"
+    issuer: HHS
+    type: manual
+    url: https://www.hhs.gov/hipaa/for-professionals/regulatory-initiatives/fact-sheet-42-cfr-part-2-final-rule/index.html
+    notes: "Akamai-protected origin returns 403 to non-browser UAs."
+    last_verified_date: 2026-05-27
+
+  - id: hhs-part2-overview
+    title: "HHS Understanding Confidentiality of Substance Use Disorder Patient Records (Part 2)"
+    issuer: HHS
+    type: manual
+    url: https://www.hhs.gov/hipaa/for-professionals/special-topics/hipaa-part-2/index.html
+    last_verified_date: 2026-05-27
+
+  - id: samhsa-findtreatment
+    title: "SAMHSA Find Treatment locator (used for investigative-agency safe harbor diligence)"
+    issuer: SAMHSA
+    type: manual
+    url: https://findtreatment.samhsa.gov/
+    last_verified_date: 2026-05-27
+
+  # ---- Statutory authority (manual review) ----
+
+  - id: usc-42-290dd-2
+    title: "42 U.S.C. § 290dd-2 — Confidentiality of records (statutory authority for Part 2)"
+    type: manual
+    url: https://www.law.cornell.edu/uscode/text/42/290dd-2
+    last_verified_date: 2026-05-27
+
+  - id: usc-42-1320d-6
+    title: "42 U.S.C. § 1320d-6 — Wrongful disclosure of individually identifiable health information (SSA § 1177, criminal penalties)"
+    type: manual
+    url: https://www.law.cornell.edu/uscode/text/42/1320d-6
+    last_verified_date: 2026-05-27

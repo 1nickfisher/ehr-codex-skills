@@ -1,0 +1,162 @@
+name: 42 CFR Part 2 source check
+
+on:
+  schedule:
+    # Mondays at 14:05 UTC — staggered 5 min after CalMHSA so issue creation
+    # and any email alerts arrive in a predictable order.
+    - cron: "5 14 * * 1"
+  workflow_dispatch:
+    inputs:
+      request_wayback_save:
+        description: "Ask Internet Archive Save Page Now to refresh Wayback-covered HHS/SAMHSA pages"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r skills/42-cfr-part-2/scripts/requirements.txt
+
+      - name: Run source check
+        id: check
+        env:
+          REQUEST_WAYBACK_SAVE: ${{ github.event.inputs.request_wayback_save }}
+        run: |
+          set +e
+          extra_args=""
+          if [ "$REQUEST_WAYBACK_SAVE" = "true" ]; then
+            extra_args="--request-wayback-save"
+          fi
+          python3 skills/42-cfr-part-2/scripts/check_sources.py \
+            skills/42-cfr-part-2 \
+            --markdown \
+            ${extra_args} > /tmp/report.md
+          status=$?
+          set -e
+          echo "exit_code=${status}" >> "$GITHUB_OUTPUT"
+          cat /tmp/report.md
+
+      - name: Build issue body
+        if: steps.check.outputs.exit_code == '2'
+        run: |
+          {
+            echo "A scheduled source check for **42 CFR Part 2** found that one or more authorities cited by this skill have changed, gone missing, or are missing a baseline."
+            echo
+            echo "**Do not auto-edit the skill.** Read each changed authority against the current SKILL.md, then either update the skill or — if the skill is still accurate — bump the baseline:"
+            echo
+            echo '```sh'
+            echo 'python3 skills/42-cfr-part-2/scripts/check_sources.py skills/42-cfr-part-2 --write'
+            echo '```'
+            echo
+            echo "## Report"
+            echo
+            cat /tmp/report.md
+          } > /tmp/issue.md
+
+      - name: Open issue on change
+        id: open_issue
+        if: steps.check.outputs.exit_code == '2'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          today=$(date -u +%Y-%m-%d)
+          issue_url=$(gh issue create \
+            --title "42 CFR Part 2 source change detected — ${today}" \
+            --body-file /tmp/issue.md \
+            --label "source-change")
+          echo "issue_url=${issue_url}" >> "$GITHUB_OUTPUT"
+
+      - name: Send email alert
+        if: steps.check.outputs.exit_code == '2'
+        env:
+          SMTP_HOST: ${{ secrets.SOURCE_ALERT_SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SOURCE_ALERT_SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SOURCE_ALERT_SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SOURCE_ALERT_SMTP_PASSWORD }}
+          ALERT_EMAIL_TO: ${{ secrets.SOURCE_ALERT_EMAIL_TO }}
+          ALERT_EMAIL_FROM: ${{ secrets.SOURCE_ALERT_EMAIL_FROM }}
+          ISSUE_URL: ${{ steps.open_issue.outputs.issue_url }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import smtplib
+          import ssl
+          from datetime import date
+          from email.message import EmailMessage
+
+          required = [
+              "SOURCE_ALERT_SMTP_HOST",
+              "SOURCE_ALERT_SMTP_USERNAME",
+              "SOURCE_ALERT_SMTP_PASSWORD",
+              "SOURCE_ALERT_EMAIL_TO",
+              "SOURCE_ALERT_EMAIL_FROM",
+          ]
+          env_map = {
+              "SOURCE_ALERT_SMTP_HOST": "SMTP_HOST",
+              "SOURCE_ALERT_SMTP_USERNAME": "SMTP_USERNAME",
+              "SOURCE_ALERT_SMTP_PASSWORD": "SMTP_PASSWORD",
+              "SOURCE_ALERT_EMAIL_TO": "ALERT_EMAIL_TO",
+              "SOURCE_ALERT_EMAIL_FROM": "ALERT_EMAIL_FROM",
+          }
+          missing = [name for name in required if not os.environ.get(env_map[name])]
+          if missing:
+              print(
+                  "Email alert skipped; missing repository secrets: "
+                  + ", ".join(missing)
+              )
+              raise SystemExit(0)
+
+          smtp_host = os.environ["SMTP_HOST"]
+          smtp_port = int(os.environ.get("SMTP_PORT") or "587")
+          smtp_username = os.environ["SMTP_USERNAME"]
+          smtp_password = os.environ["SMTP_PASSWORD"]
+          alert_to = os.environ["ALERT_EMAIL_TO"]
+          alert_from = os.environ["ALERT_EMAIL_FROM"]
+          issue_url = os.environ.get("ISSUE_URL") or "(issue URL unavailable)"
+
+          report = open("/tmp/report.md", encoding="utf-8").read()
+          today = date.today().isoformat()
+
+          msg = EmailMessage()
+          msg["Subject"] = f"42 CFR Part 2 skill source change detected - {today}"
+          msg["From"] = alert_from
+          msg["To"] = alert_to
+          msg.set_content(
+              "The 42 CFR Part 2 source-check workflow detected a source update.\n\n"
+              f"Issue: {issue_url}\n\n"
+              "Report:\n"
+              f"{report}"
+          )
+
+          if smtp_port == 465:
+              with smtplib.SMTP_SSL(
+                  smtp_host, smtp_port, timeout=30, context=ssl.create_default_context()
+              ) as smtp:
+                  smtp.login(smtp_username, smtp_password)
+                  smtp.send_message(msg)
+          else:
+              with smtplib.SMTP(smtp_host, smtp_port, timeout=30) as smtp:
+                  smtp.ehlo()
+                  smtp.starttls(context=ssl.create_default_context())
+                  smtp.ehlo()
+                  smtp.login(smtp_username, smtp_password)
+                  smtp.send_message(msg)
+
+          print(f"Email alert sent to {alert_to}")
+          PY

@@ -12,6 +12,14 @@ skills:
     summary: "California Medi-Cal behavioral health documentation rules for SMHS, DMC, and DMC-ODS workflows."
     canonical_sources: skills/calmhsa-medi-cal-documentation/references/sources.yml
 
+  - id: 42-cfr-part-2
+    path: skills/42-cfr-part-2
+    status: stable
+    version: v0.1.0
+    last_verified: 2026-05-27
+    summary: "SAMHSA Confidentiality of SUD Patient Records — 2024 final rule (89 FR 12472), single TPO consent, redisclosure, court orders, breach notification, anti-discrimination, HITECH-tier penalties. OCR enforcement active since 2026-02-16."
+    canonical_sources: skills/42-cfr-part-2/references/sources.yml
+
 planned:
   - id: ehr-release-ops
     summary: "Release, staging, and operational checks for EHR deployments."

@@ -8,11 +8,11 @@ Each skill is a single `SKILL.md` (YAML frontmatter + markdown body) loadable by
 
 | Skill | Covers | Status | Last verified |
 |---|---|---|---|
+| [42-cfr-part-2](skills/42-cfr-part-2/SKILL.md) | SAMHSA Confidentiality of SUD Patient Records — 2024 final rule (89 FR 12472), single TPO consent, redisclosure, court orders, breach notification, anti-discrimination, HITECH-tier penalties (OCR enforcement active since 2026-02-16) | stable | 2026-05-27 |
 | [calmhsa-medi-cal-documentation](skills/calmhsa-medi-cal-documentation/SKILL.md) | California Medi-Cal behavioral health documentation (SMHS / DMC / DMC-ODS) per DHCS BHIN 23-068 and the CalMHSA clinical documentation guides | stable | 2026-05-26 |
 
 Planned (in order of next-up):
 
-- `42-cfr-part-2` — SAMHSA confidentiality of SUD patient records (2024 final rule). No mature public skill exists.
 - `onc-information-blocking` — ONC Cures Act final rule, the eight exceptions, actor obligations.
 - `bh-screening-instruments` — PHQ-9, GAD-7, AUDIT, DAST-10, C-SSRS, CANS, ACEs, PSC-35: scoring, reuse cadences, scope of administration.
 - `zero-suicide` — SAMHSA Zero Suicide framework.
