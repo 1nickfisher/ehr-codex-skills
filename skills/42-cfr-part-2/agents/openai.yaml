@@ -1,0 +1,7 @@
+interface:
+  display_name: "42 CFR Part 2 (SUD Confidentiality)"
+  short_description: "Apply current 42 CFR Part 2 rules to SUD record handling"
+  default_prompt: "Use $42-cfr-part-2 to review this workflow for SAMHSA 42 CFR Part 2 (Confidentiality of Substance Use Disorder Patient Records) compliance — the 2024 final rule, single TPO consent, redisclosure, court-order workflows, breach notification, and patient rights."
+
+policy:
+  allow_implicit_invocation: true

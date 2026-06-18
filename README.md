@@ -8,11 +8,11 @@ Each skill is a single `SKILL.md` (YAML frontmatter + markdown body) loadable by
 
 | Skill | Covers | Status | Last verified |
 |---|---|---|---|
+| [42-cfr-part-2](skills/42-cfr-part-2/SKILL.md) | SAMHSA Confidentiality of SUD Patient Records — 2024 final rule (89 FR 12472), single TPO consent, redisclosure, court orders, breach notification, anti-discrimination, HITECH-tier penalties (OCR enforcement active since 2026-02-16) | stable | 2026-05-27 |
 | [calmhsa-medi-cal-documentation](skills/calmhsa-medi-cal-documentation/SKILL.md) | California Medi-Cal behavioral health documentation (SMHS / DMC / DMC-ODS) per DHCS BHIN 23-068 and the CalMHSA clinical documentation guides | stable | 2026-05-26 |
 
 Planned (in order of next-up):
 
-- `42-cfr-part-2` — SAMHSA confidentiality of SUD patient records (2024 final rule). No mature public skill exists.
 - `onc-information-blocking` — ONC Cures Act final rule, the eight exceptions, actor obligations.
 - `bh-screening-instruments` — PHQ-9, GAD-7, AUDIT, DAST-10, C-SSRS, CANS, ACEs, PSC-35: scoring, reuse cadences, scope of administration.
 - `zero-suicide` — SAMHSA Zero Suicide framework.
@@ -27,30 +27,56 @@ Skills for FHIR, generic ICD-10 lookup, NPI registry, and similar commodity heal
 - [anthropics/healthcare](https://github.com/anthropics/healthcare) — official FHIR Developer skill, prior authorization review, ICD-10 codes, NPI registry, CMS coverage, PubMed.
 - [Sushegaad/Claude-Skills-Governance-Risk-and-Compliance](https://github.com/Sushegaad/Claude-Skills-Governance-Risk-and-Compliance) — community GRC collection (HIPAA, SOC 2, NIST, GDPR, Section 508, WCAG, …). PRs to add behavioral-health context are a better fit upstream than a fork here.
 
-## Installing a skill
+## Installing
 
-Two patterns work; both treat this repo as the source of truth and avoid the stale-copy problem.
+Three patterns work; all treat this repo as the source of truth and avoid the stale-copy problem. Pick by host:
 
-**Symlink** — recommended when you control your development environment and want updates on `git pull`:
+### Claude Code — install as a plugin (recommended)
+
+A `.claude-plugin/plugin.json` ships at the repo root, so the entire collection installs in one step. Skills under `skills/` are auto-discovered:
 
 ```sh
-# Claude Code
-ln -s "$(pwd)/skills/calmhsa-medi-cal-documentation" \
-  ~/.claude/skills/calmhsa-medi-cal-documentation
+# Local clone
+/plugin install /path/to/ehr-codex-skills
 
-# Codex
-ln -s "$(pwd)/skills/calmhsa-medi-cal-documentation" \
-  ~/.codex/skills/calmhsa-medi-cal-documentation
+# Or from a remote once the repo is published
+/plugin install <git-url>
 ```
 
-Restart your agent afterwards so it re-reads skill metadata.
+Claude Code reads each skill's SKILL.md frontmatter (`name` + `description`) for trigger decisions. Restart Claude Code after install so the skill catalog refreshes.
 
-**Vendor** — recommended inside a product repo where you want to pin a specific version and review updates before they reach your codebase:
+### Codex — symlink (or whatever your install path expects)
+
+The `agents/openai.yaml` per skill provides Codex's interface manifest (display name, default prompt, implicit-invocation policy). Symlink each skill directory in:
 
 ```sh
-# Pin to a commit and copy the skill directory in.
+ln -s "$(pwd)/skills/calmhsa-medi-cal-documentation" \
+  ~/.codex/skills/calmhsa-medi-cal-documentation
+ln -s "$(pwd)/skills/42-cfr-part-2" \
+  ~/.codex/skills/42-cfr-part-2
+```
+
+Restart Codex afterwards.
+
+### Symlink for any Agent Skills-compatible runtime
+
+For Gemini CLI, Cursor, or other hosts, the SKILL.md is the universal interface. Symlink the skill directory into whatever path the host expects:
+
+```sh
+# Claude Code (single-skill alternative to plugin install)
+ln -s "$(pwd)/skills/42-cfr-part-2" ~/.claude/skills/42-cfr-part-2
+```
+
+### Vendor — inside a product repo (pin and review)
+
+When the skill collection is consumed by a product codebase that needs to pin a specific version and review updates before they reach production:
+
+```sh
+# Git submodule pinned to a commit
 git submodule add -b main git@github.com:1nickfisher/ehr-codex-skills.git vendor/ehr-codex-skills
-# or simply: cp -r <ehr-codex-skills>/skills/calmhsa-medi-cal-documentation docs/skills/
+
+# Or copy a skill directly
+cp -r <ehr-codex-skills>/skills/42-cfr-part-2 docs/skills/
 ```
 
 ## Freshness model
