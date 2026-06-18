@@ -263,8 +263,8 @@ sources:
     type: regulatory
     url: https://www.federalregister.gov/api/v1/documents/2024-02544.json
     notes: "Stable JSON metadata: citation, dates, agencies, RIN, html_url, pdf_url."
-    expected_sha256: 948b682f2fffbc530233ece08f43af502f60122518a8130db1c76e2d4db06f73
-    last_verified_date: 2026-05-27
+    expected_sha256: eb9a2defb655bd41c4d6891d51f3f1f71e774dd62fe33e4e51e1fd27705b6b01
+    last_verified_date: 2026-06-18
 
   - id: govinfo-cfr-2024-part-2
     title: "Annual CFR 2024 Edition — Title 42 Vol. 1 Part 2 (XML)"
