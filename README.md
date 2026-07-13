@@ -9,16 +9,13 @@ Each packaged skill has a `SKILL.md` plus supporting source metadata, checks, an
 | Skill | Covers | Status | Last verified |
 |---|---|---|---|
 | [42-cfr-part-2](skills/42-cfr-part-2/SKILL.md) | SAMHSA Confidentiality of SUD Patient Records — 2024 final rule (89 FR 12472), single TPO consent, redisclosure, court orders, breach notification, anti-discrimination, HITECH-tier penalties (OCR enforcement active since 2026-02-16) | stable | 2026-05-27 |
-| [calmhsa-medi-cal-documentation](skills/calmhsa-medi-cal-documentation/SKILL.md) | California Medi-Cal behavioral health documentation (SMHS / DMC / DMC-ODS) per DHCS BHIN 23-068 and the CalMHSA clinical documentation guides | stable | 2026-05-26 |
+| [calmhsa-medi-cal-documentation](skills/calmhsa-medi-cal-documentation/SKILL.md) | California Medi-Cal behavioral health documentation and claim linkage (SMHS / DMC / DMC-ODS) per current DHCS authorities and CalMHSA guidance | stable | 2026-07-12 |
 
-Planned (in order of next-up):
+Planned (California-first, in order):
 
-- `onc-information-blocking` — ONC Cures Act final rule, the eight exceptions, actor obligations.
-- `bh-screening-instruments` — PHQ-9, GAD-7, AUDIT, DAST-10, C-SSRS, CANS, ACEs, PSC-35: scoring, reuse cadences, scope of administration.
-- `zero-suicide` — SAMHSA Zero Suicide framework.
-- `ccbhc` — Federal CCBHC certification standards.
-- `ncpdp-script-epcs-pdmp` — e-prescribing, EPCS, and PDMP integration.
-- Additional state-Medicaid BH documentation skills (NY, TX, MA, OH, WA, …) using `calmhsa-medi-cal-documentation` as the template.
+- `california-medi-cal-behavioral-health-claiming` — current-year code, unit, modifier, discipline, place-of-service, dependency, and lockout rules.
+- `california-bhsa-documentation` — BHSA-funded FSP and BHSS documentation requirements and their Medi-Cal boundary.
+- `california-behavioral-health-privacy-consent` — California privacy, consent, and data-sharing rules, with explicit 42 CFR Part 2 interaction and human legal review.
 
 ## What's deliberately not here
 
@@ -107,7 +104,7 @@ Compliance content rots silently — a regulation changes, the prose stays the s
 3. `skills/<name>/scripts/check_sources.py` checks each automatable authority, compares baselines, and reports changes. Sources marked `type: manual` remain on the human-review list.
 4. A weekly GitHub Action runs the monitoring check and **opens or updates an issue** when an automatable authority changes. It never auto-edits a skill or pulls updates into installed clones; a human reads the new authority and decides what (if anything) needs updating.
 
-Current coverage is 19 automated and 5 manual-review sources for `42-cfr-part-2`, and 6 automated and 12 manual-review sources for `calmhsa-medi-cal-documentation`.
+Current coverage is 19 automated and 5 manual-review sources for `42-cfr-part-2`, and 15 automated and 13 manual-review sources for `calmhsa-medi-cal-documentation`.
 
 Supported source types:
 

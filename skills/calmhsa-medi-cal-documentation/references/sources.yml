@@ -3,8 +3,9 @@ schema_version: 1
 meta:
   skill: calmhsa-medi-cal-documentation
   last_full_review:
-    date: 2026-05-26
+    date: 2026-07-12
     reviewer: "@nick"
+  manual_review_interval_days: 90
   fetch_notes: |
     DHCS hosts many BHIN PDFs behind Imperva/Incapsula bot protection. Every
     direct PDF URL can return a small JavaScript challenge page regardless
@@ -12,8 +13,11 @@ meta:
     is not reliable. For DHCS PDFs with verified Wayback Machine PDF captures,
     use `type: wayback` and compare the Internet Archive CDX digest plus the
     archived-byte SHA-256. Treat any digest change as a review signal, not as
-    proof that the regulation changed. DHCS authorities without verified
-    canonical PDF URLs remain `type: manual`.
+    proof that the regulation changed. Prefer directly fetchable DHCS
+    `/wp-content/uploads/` artifacts over the bot-protected `/file/` wrappers.
+    Declare `artifact_type` so a small HTML challenge cannot be baselined as a
+    PDF or workbook. DHCS authorities without a verified artifact URL remain
+    `type: manual` and carry a `review_due_date` when time-sensitive.
 
     CalMHSA hosts its clinical documentation guides via Cloudflare; those
     are directly fetchable and have real SHA-256 baselines below.
@@ -25,6 +29,7 @@ sources:
     title: "CalMHSA Outpatient SMHS Clinical Documentation Guide (April 2026)"
     issuer: CalMHSA
     type: guidance
+    artifact_type: pdf
     url: https://www.calmhsa.org/wp-content/uploads/2026/04/SMHS-Clinical-Documentation-Guide-04.2026.pdf
     issued_date: 2026-04-01
     last_verified_date: 2026-05-26
@@ -36,6 +41,7 @@ sources:
     title: "CalMHSA Outpatient DMC and DMC-ODS Clinical Documentation Guide (April 2025)"
     issuer: CalMHSA
     type: guidance
+    artifact_type: pdf
     url: https://www.calmhsa.org/wp-content/uploads/2025/04/SUD-Clinical-Documentation-Guide-4.25.2025.pdf
     issued_date: 2025-04-25
     last_verified_date: 2026-05-26
@@ -43,7 +49,133 @@ sources:
     etag: '"680c0c59-dae22"'
     last_modified: "Fri, 25 Apr 2025 22:27:37 GMT"
 
-  # ---- DHCS authorities (manual review — Imperva-wrapped, not fetchable) ----
+  # ---- Current DHCS claiming specifications (SFY 2026-27) ----
+
+  - id: dhcs-medccc-claims-library
+    title: "DHCS County Claims Customer Services Library"
+    issuer: DHCS
+    type: manual
+    status: current
+    normative: false
+    url: https://www.dhcs.ca.gov/services/mental-health-services-division-default/county-claims-customer-services-library/
+    purpose: "Discovery index for current Short Doyle Medi-Cal billing manuals and service tables."
+    last_verified_date: 2026-07-12
+    review_due_date: "2026-08-01"
+    notes: "The canonical page is bot-protected for the checker; review its current-year links manually."
+
+  - id: dhcs-smhs-billing-manual-2026-27
+    title: "DHCS Specialty Mental Health Services Billing Manual — SFY 2026-27"
+    issuer: DHCS
+    type: direct
+    document_kind: billing_manual
+    artifact_type: pdf
+    status: final
+    normative: true
+    fiscal_year: "2026-27"
+    version: "4.0"
+    issued_month: "2026-07"
+    effective_start: "2026-07-01"
+    effective_end: "2027-06-30"
+    url: https://www.dhcs.ca.gov/wp-content/uploads/2026/05/SMHS-Billing-Manual-SFY2026-27.pdf
+    expected_sha256: 10016dcc2cf4a9430f09a74516f29eb9d67f81786976341b42f89ce115a20fdd
+    expected_bytes: 1182585
+    last_verified_date: 2026-07-12
+
+  - id: dhcs-dmc-ods-billing-manual-2026-27
+    title: "DHCS DMC-ODS Billing Manual — SFY 2026-27"
+    issuer: DHCS
+    type: direct
+    document_kind: billing_manual
+    artifact_type: pdf
+    status: final
+    normative: true
+    fiscal_year: "2026-27"
+    version: "4.0"
+    issued_month: "2026-07"
+    effective_start: "2026-07-01"
+    effective_end: "2027-06-30"
+    url: https://www.dhcs.ca.gov/wp-content/uploads/2026/06/DMC-ODS-Billing-Manual-4.0.pdf
+    expected_sha256: 58a8261f9cc370429b8651d23bed1524dec66e060b7cf0677fd885e17b082903
+    expected_bytes: 928317
+    last_verified_date: 2026-07-12
+
+  - id: dhcs-dmc-state-plan-billing-manual-2026-27
+    title: "DHCS DMC State Plan Billing Manual — SFY 2026-27"
+    issuer: DHCS
+    type: direct
+    document_kind: billing_manual
+    artifact_type: pdf
+    status: final
+    normative: true
+    fiscal_year: "2026-27"
+    version: "4.0"
+    issued_month: "2026-07"
+    effective_start: "2026-07-01"
+    effective_end: "2027-06-30"
+    url: https://www.dhcs.ca.gov/wp-content/uploads/2026/06/DMC-Billing-Manual-FY-26-27.pdf
+    expected_sha256: 63a10f4ccc3ef94e7bc5eb01b47734e38c48384477109d25c8e8c1abf64c4ac9
+    expected_bytes: 857098
+    last_verified_date: 2026-07-12
+
+  - id: dhcs-smhs-service-table-2026-27
+    title: "DHCS Specialty Mental Health Service Table — SFY 2026-27"
+    issuer: DHCS
+    type: direct
+    document_kind: service_table
+    artifact_type: xlsx
+    status: final
+    normative: true
+    fiscal_year: "2026-27"
+    published_month: "2026-05"
+    effective_start: "2026-07-01"
+    effective_end: "2027-06-30"
+    url: https://www.dhcs.ca.gov/wp-content/uploads/2026/06/Specialty-Mental-Health-Service-Table-26-27.xlsx
+    expected_sha256: 220a2a0e0044bbd31571e39faa02d2b8d8d059ae0b33e4ff27650d3eba8350d0
+    expected_bytes: 411907
+    etag: '"817dc3d13d704a07"'
+    last_modified: "Tue, 02 Jun 2026 16:06:33 GMT"
+    last_verified_date: 2026-07-12
+
+  - id: dhcs-dmc-ods-service-table-2026-27
+    title: "DHCS DMC-ODS Service Table — SFY 2026-27"
+    issuer: DHCS
+    type: direct
+    document_kind: service_table
+    artifact_type: xlsx
+    status: final
+    normative: true
+    fiscal_year: "2026-27"
+    revised_month: "2026-06"
+    effective_start: "2026-07-01"
+    effective_end: "2027-06-30"
+    url: https://www.dhcs.ca.gov/wp-content/uploads/2026/06/DMC-ODS-Service-Table-26-27-2.xlsx
+    expected_sha256: d3243c936618e3a2bbe71c65e0aafee58aa4e14ebdaf7ab9a458a0c957caa217
+    expected_bytes: 114701
+    etag: '"fa979c2c574d79fb"'
+    last_modified: "Mon, 08 Jun 2026 14:45:12 GMT"
+    last_verified_date: 2026-07-12
+
+  - id: dhcs-dmc-state-plan-service-table-2026-27
+    title: "DHCS DMC State Plan Service Table — SFY 2026-27"
+    issuer: DHCS
+    type: direct
+    document_kind: service_table
+    artifact_type: xlsx
+    status: final
+    normative: true
+    fiscal_year: "2026-27"
+    published_month: "2026-06"
+    effective_start: "2026-07-01"
+    effective_end: "2027-06-30"
+    url: https://www.dhcs.ca.gov/wp-content/uploads/2026/06/DMC-Service-Table-26-27-2.xlsx
+    expected_sha256: 4e09a5c50caca73c74446969d60dd41048868d351094c31b519cef5f3054645e
+    expected_bytes: 90178
+    etag: '"ce6aeea75784a1d8"'
+    last_modified: "Mon, 08 Jun 2026 14:49:15 GMT"
+    last_verified_date: 2026-07-12
+    notes: "The official library wrapper redirects to this artifact. Direct GET can be intermittently Imperva-blocked; the checker reports an HTML challenge instead of baselining it."
+
+  # ---- DHCS documentation and clinical authorities ----
 
   - id: bhin-23-068
     title: "DHCS BHIN 23-068 — Documentation Requirements for SMH, DMC, and DMC-ODS Services"
@@ -75,11 +207,56 @@ sources:
     type: manual
     last_verified_date: 2026-05-26
 
-  - id: bhin-21-073
-    title: "DHCS BHIN 21-073 — SMHS Access Criteria"
+  - id: bhin-26-002
+    title: "DHCS BHIN 26-002 — SMHS Access Criteria"
     issuer: DHCS
-    type: manual
-    last_verified_date: 2026-05-26
+    type: direct
+    document_kind: authority
+    artifact_type: pdf
+    status: final
+    normative: true
+    url: https://www.dhcs.ca.gov/wp-content/uploads/2026/05/BHIN-26-002-Access-Criteria.pdf
+    issued_date: 2026-01-20
+    effective_date: "2026-01-20"
+    supersedes: [bhin-21-073]
+    expected_sha256: 46615ac917b167dce0d0b4eecc915c20922692557bbd789165a6ba63b47e26db
+    expected_bytes: 905785
+    last_verified_date: 2026-07-12
+
+  - id: bhin-26-022
+    title: "DHCS BHIN 26-022 — NTP Counseling Unit Threshold and Manual Review"
+    issuer: DHCS
+    type: direct
+    document_kind: authority
+    artifact_type: pdf
+    status: final
+    normative: true
+    url: https://www.dhcs.ca.gov/wp-content/uploads/2026/06/NTP-Counseling-Unit-Threshold-and-Manual-Review.pdf
+    issued_date: 2026-06-22
+    effective_date: "2026-09-20"
+    effective_rule: "Dates of service beginning 90 days from publication."
+    expected_sha256: ab0c923c182dc071ea04c795cc8449642ec951b72d7e7a8c7705e4595cd8d117
+    expected_bytes: 209261
+    last_verified_date: 2026-07-12
+    review_due_date: "2026-09-14"
+
+  - id: draft-bhin-26-0xx-ebp-fsp-bhss-claiming
+    title: "Draft DHCS BHIN 26-0XX — Medi-Cal Claiming for EBPs, FSP Services, and BHSS Early Intervention"
+    issuer: DHCS
+    type: direct
+    document_kind: draft_authority
+    artifact_type: pdf
+    status: draft
+    normative: false
+    url: https://www.dhcs.ca.gov/wp-content/uploads/2026/06/Medi-Cal-Unbundled-EBP-Claiming.pdf
+    posted_date: 2026-06-25
+    comment_deadline: "2026-07-17"
+    proposed_effective_date: "2027-01-01"
+    review_due_date: "2026-07-13"
+    expected_sha256: 9c7edfde6afcaf306bdcbbe79aa2ed71ad737a0d943441a5de59ade2c894456b
+    expected_bytes: 221733
+    last_verified_date: 2026-07-12
+    notes: "Track for final publication. Do not implement the proposed codes or modifiers."
 
   - id: bhin-23-018
     title: "DHCS BHIN 23-018 — Telehealth Policy"
@@ -137,6 +314,18 @@ sources:
     url: https://www.dhcs.ca.gov/formsandpubs/Pages/Behavioral-Health-Information-Notice-(BHIN)-Library.aspx
     purpose: "Discover newly-published BHINs. Visit quarterly."
     last_verified_date: 2026-05-26
+
+  - id: dhcs-bhin-2026-index
+    title: "DHCS 2026 Behavioral Health Information Notices"
+    issuer: DHCS
+    type: manual
+    status: current
+    normative: false
+    url: https://www.dhcs.ca.gov/2026-behavioral-health-information-notices/
+    purpose: "Detect final publication or replacement of 2026 draft BHINs."
+    last_verified_date: 2026-07-12
+    review_due_date: "2026-07-13"
+    notes: "Review weekly while the EBP/FSP/BHSS claiming BHIN remains draft; automated fetches receive an Imperva challenge."
 
   # ---- Statutory / regulatory text (manual review) ----
 

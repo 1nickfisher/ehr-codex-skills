@@ -3,7 +3,7 @@ name: calmhsa-medi-cal-documentation
 description: Apply current DHCS + CalMHSA documentation rules for California Medi-Cal behavioral health (SMHS, DMC, DMC-ODS) — use whenever building, reviewing, or modifying assessments, problem lists, progress notes, treatment/care plans, claim/code logic, telehealth records, signatures/co-signatures, scope-of-practice gates, timeliness checks, or audit-readiness features in any clinical workflow that touches an MHP, DMC, or DMC-ODS member record. Trigger even when the request only names "EHR," "note," "assessment," "treatment plan," "billing," or a clinician role, because that work almost always carries Medi-Cal documentation rules.
 license: MIT
 metadata:
-  last_verified: 2026-05-26
+  last_verified: 2026-07-12
   sources_file: references/sources.yml
 ---
 
@@ -13,14 +13,15 @@ metadata:
 
 This skill is for engineering, product, QA, and clinical work on any California Medi-Cal behavioral health system where the artifact under review or being built is a clinical document, a piece of UI that captures one, a rule that validates one, or a process that claims for one.
 
-The rules are grounded in the current authorities. Two documents control most behavior — read them in conflict order:
+The rules are grounded in current authorities. Use these source layers for the question they actually govern:
 
 1. **DHCS Behavioral Health Information Notice (BHIN) 23-068** — *Updates to Documentation Requirements for all SMH, DMC, and DMC-ODS Services* (Nov 20, 2023; effective Jan 1, 2024). Supersedes BHIN 22-019. Authority: W&I § 14184.402(h)(3). This is the regulatory floor.
-2. **CalMHSA Outpatient SMHS Clinical Documentation Guide (2026)** and the **CalMHSA Outpatient DMC/DMC-ODS Clinical Documentation Guide (2025)** — practical guidance built on top of the BHIN. Use these for examples, domain detail, scope-of-practice matrix, and sample notes.
+2. **The current DHCS billing manual and service table for the delivery system and state fiscal year** — the claim specification for codes, units, time thresholds, modifiers, taxonomy, place of service, dependent-code edits, and lockouts. For dates of service in SFY 2026-27, use the July 2026 version 4.0 SMHS, DMC, or DMC-ODS manual and its 2026-27 service table.
+3. **CalMHSA Outpatient SMHS Clinical Documentation Guide (2026)** and the **CalMHSA Outpatient DMC/DMC-ODS Clinical Documentation Guide (2025)** — practical guidance built on top of the DHCS authorities. Use these for examples and workflow detail only when consistent with the current DHCS specification.
 
-If a county Mental Health Plan (MHP), DMC, or DMC-ODS contract conflicts with BHIN 23-068, **the BHIN wins**, except where Enclosure 1a (care planning requirements that remain in effect — TCM, ICC, TBS, Peer Support, CCRP, CTF, MHRC, SRP, STRTP, DMC-ODS Residential, FSP ISSP, SABG) imposes a stricter rule. When no conflict exists, comply with both.
+For clinical-documentation requirements, if a county Mental Health Plan (MHP), DMC, or DMC-ODS contract conflicts with BHIN 23-068, **the BHIN wins**, except where Enclosure 1a (care planning requirements that remain in effect — TCM, ICC, TBS, Peer Support, CCRP, CTF, MHRC, SRP, STRTP, DMC-ODS Residential, FSP ISSP, SABG) imposes a stricter rule. For claim construction and adjudication, use the current manual and service table as well. When no conflict exists, comply with all applicable sources.
 
-These rules **do not** apply to: Narcotic Treatment Programs; psychiatric inpatient services in hospitals, PHFs, or PRTFs; DMC-ODS inpatient in CDRHs and acute psychiatric hospitals. They **do not** apply to Fee-for-Service Medi-Cal or Medi-Cal Managed Care Plan (MCP) behavioral health — those are separate documentation regimes.
+The core BHIN 23-068 documentation rules summarized here **do not** apply to: Narcotic Treatment Programs; psychiatric inpatient services in hospitals, PHFs, or PRTFs; DMC-ODS inpatient in CDRHs and acute psychiatric hospitals. A narrow NTP claiming exception from BHIN 26-022 is tracked below because it changes claim review behavior. These rules **do not** apply to Fee-for-Service Medi-Cal or Medi-Cal Managed Care Plan (MCP) behavioral health — those are separate documentation regimes.
 
 ## When to apply this skill
 
@@ -43,7 +44,7 @@ Skip only if the work is purely cosmetic with no clinical or claim impact (typog
 
 When you propose code, schema, validations, or copy:
 
-1. **Cite the source** — name the BHIN section (e.g. "BHIN 23-068 § (d)(2)") or CalMHSA guide section. Future reviewers need to verify against the authority, not your memory.
+1. **Cite the source** — name the BHIN section (e.g. "BHIN 23-068 § (d)(2)"), current DHCS manual/table and fiscal year, or CalMHSA guide section. Future reviewers need to verify against the authority, not your memory.
 2. **State the minimum**, not your preferences. DHCS deliberately left a lot to clinical discretion. Don't add required fields or stricter timelines the regulation does not impose — that creates audit liability and burns clinician time. If a county contract adds a stricter rule, surface that as a county-configurable layer, not a hard-coded default.
 3. **Default to person-first, plain-language UX copy.** Members can request and read their records. Avoid jargon, internal codes, and acronyms in user-visible text. Members are not "cases."
 4. **When in doubt, ask which delivery system** (MHP / DMC / DMC-ODS / mixed) the feature targets. The rules diverge in important places (e.g., ASAM is required for DMC/DMC-ODS only; CANS/PSC-35 are SMHS youth-only).
@@ -110,7 +111,7 @@ A problem identified during a service encounter may be addressed in that encount
 
 1. Type of service rendered.
 2. Date of service.
-3. Duration of **direct patient care** for the service (defined in the SMHS / DMC-ODS billing manuals).
+3. Duration of **direct patient care** for the service (defined in the current SMHS, DMC, or DMC-ODS billing manual and service table).
 4. Location / place of service.
 5. Typed or legibly printed name and signature of the service provider, with date of signature.
 6. Brief description of how the service addressed the member's behavioral health needs (symptom, condition, diagnosis, and/or risk factors).
@@ -156,6 +157,8 @@ Title 9 § 1810.205.2 (Client Plan) and § 1810.232 (Plan Development) are **sup
 
 Each progress note must provide enough detail to support the **service code(s)** selected. (BHIN 23-068 § (d)(1))
 
+**Start with the current claim specification.** For SFY 2026-27 dates of service, use the July 2026 version 4.0 billing manual and 2026-27 service table for SMHS, DMC State Plan, or DMC-ODS. Do not carry forward a prior-year code, unit, modifier, discipline, place-of-service, dependent-code, or lockout rule. Do not infer a billable duration from an appointment label or a generic example; verify the exact code row and time-selection rule.
+
 **Code sets:**
 
 - **CPT** + **HCPCS** for the procedure (the service activity).
@@ -164,7 +167,7 @@ Each progress note must provide enough detail to support the **service code(s)**
 
 Current ICD-10-CM and HCPCS/CPT codes are **not required inside the progress note narrative**, but they must appear on the claim and be clearly associated with each encounter and consistent with the note description. (BHIN 23-068 § (d)(1) fn.)
 
-**Allowable disciplines vary by code.** Build a per-code allowable-discipline check, not a global "is licensed?" gate. Reference: CalMHSA SMHS Clinical Documentation Guide Appendix VI. A few high-traffic examples:
+**Allowable disciplines vary by code.** Build a per-code allowable-discipline check, not a global "is licensed?" gate. The current DHCS service table and billing manual control claim validation. The CalMHSA SMHS Clinical Documentation Guide discipline matrix is practical workflow guidance and must not override the current DHCS specification. A few high-traffic examples:
 
 | Code | Description | Allowable disciplines (abbreviated) |
 |---|---|---|
@@ -173,7 +176,7 @@ Current ICD-10-CM and HCPCS/CPT codes are **not required inside the progress not
 | 90832 / 90834 / 90837 | Individual Psychotherapy 30 / 45 / 60 min | All LPHA disciplines (LCSW, LMFT, LPCC, PhD/PsyD, MD/DO, NP, PA, CNS, and CTs) |
 | 90847 | Family Psychotherapy w/ Patient Present | All LPHA disciplines |
 | 90853 | Group Psychotherapy | All LPHA disciplines |
-| H0031 | Mental Health Assessment by Non-Physician | Broad — LPHAs, MHRS, AOD, RN, LVN, LPT, LOT, Pharm, "Other," registered/waivered/CTs |
+| H0031 | Mental Health Assessment by Non-Physician | Broad non-physician set — AOD, CNS, LCSW, LMFT, LOT, LPCC, LPT, LVN, MHRS, NP, PA, PhD/PsyD, Pharm, RN, "Other," and permitted registered/waivered/CT variants; excludes MD/DO |
 | H2011 | Crisis Intervention | Broad including MHRS, AOD, RN, LVN, LPT, LOT, Pharm, MD/DO, NPs |
 | H2017 | Psychosocial Rehabilitation | Broad including MHRS, MA, RN, LVN, LPT, LOT, Pharm |
 | T1017 | Targeted Case Management | Broad including MHRS, MA, AOD, RN, LVN, LPT, LOT, Pharm |
@@ -182,13 +185,17 @@ Current ICD-10-CM and HCPCS/CPT codes are **not required inside the progress not
 | H0038 | Self-help / Peer Services | **Certified Peer Specialist only** |
 | H0025 | BH Prevention Education Services | Certified Peer Specialist only |
 
-CT = trainee, CT/waivered staff under the direct supervision of a Behavioral Health Professional. See the matrix in CalMHSA SMHS Clinical Documentation Guide, Appendix III, for the authoritative service-vs-discipline grid; treat it as the source of truth for new validations.
+CT = trainee, CT/waivered staff under the direct supervision of a Behavioral Health Professional. Use the CalMHSA matrix to orient the workflow, then verify each new validation against the current DHCS service table and manual.
 
 **"Collateral" is no longer a distinct service type.** Document collateral contact by selecting the service code that best describes the activity. (CalMHSA 2026 SMHS Guide § "Service Categories")
 
 **Bundled services.** If a daily-rate / bundled service (e.g., DMC/DMC-ODS Residential, CRT, ART, DTI, DR, TFC) is delivered on the same day as a second, non-bundled service, both notes are required to support both claims. (BHIN 23-068 § (d)(6))
 
 **No sign-in sheets for DMC/DMC-ODS groups.** Title 22 § 51341.1(g)(2)(A–E) is superseded. The provider maintains a participant list per BHIN 23-068, but the old sign-in-sheet regulatory format is gone.
+
+**NTP counseling outlier rule (future-effective).** BHIN 26-022 applies to DMC and DMC-ODS claims for dates of service beginning September 20, 2026. When aggregate NTP counseling for one member on one date reaches **nine or more 15-minute units** across H0004 and H0005, plus T1006 for DMC-ODS only, the county must manually review documentation for all affected units and place modifier **GD** on every affected NTP counseling service line. Do not apply this threshold before its effective date, and verify the service tables at implementation time.
+
+**Draft claiming guidance is non-normative.** DHCS posted draft BHIN 26-0XX on June 25, 2026 for proposed EBP, FSP, and BHSS Early Intervention codes and modifiers beginning January 1, 2027. Track final publication, but do not implement the draft code/modifier table as a current rule.
 
 ### 6. Signatures, co-signatures, scope, supervision
 
@@ -222,7 +229,7 @@ Refer to BHIN 23-018 (or any subsequent telehealth policy). Documentation must c
 - The person has a condition putting them at high risk for a mental health disorder due to trauma (elevated trauma-screening score, child welfare, juvenile justice, or homelessness); OR
 - Both: significant impairment / reasonable probability of significant deterioration / reasonable probability of not progressing developmentally / a need for SMHS not included in MCP mental health benefits; AND condition is due to a diagnosed mental health disorder, a suspected mental health disorder, or significant trauma per a licensed mental health professional's assessment.
 
-(Welfare & Institutions Code § 14059.5; 42 U.S.C. § 1396d(r); BHIN 21-073.)
+(Welfare & Institutions Code § 14059.5; 42 U.S.C. § 1396d(r); BHIN 26-002, which supersedes BHIN 21-073.)
 
 **DMC/DMC-ODS.** Driven by ASAM Criteria assessment; LPHA-confirmed.
 
@@ -346,7 +353,8 @@ Escalate to a clinical reviewer or county QI/QA team when:
 - DHCS BHIN 23-068 — Documentation Requirements for SMH, DMC, and DMC-ODS Services (effective Jan 1, 2024). https://www.dhcs.ca.gov/Documents/BHIN-23-068-Documentation-Requirements-for-SMH-DMC-and-DMC-ODS-Services.pdf
 - DHCS BHIN 22-013 — Code Selection Prior to Diagnosis.
 - DHCS BHIN 22-011 — No Wrong Door for Mental Health Services.
-- DHCS BHIN 21-073 — SMHS Access Criteria.
+- DHCS BHIN 26-002 — SMHS Access Criteria (supersedes BHIN 21-073).
+- DHCS BHIN 26-022 — NTP Counseling Unit Threshold and Manual Review (effective for dates of service beginning Sept 20, 2026).
 - DHCS BHIN 23-018 — Telehealth Policy (or subsequent).
 - DHCS BHIN 25-020 — Screening Tools, Transition of Care Tool.
 - DHCS BHIN 24-001 — ASAM Criteria for DMC/DMC-ODS.
@@ -355,7 +363,12 @@ Escalate to a clinical reviewer or county QI/QA team when:
 - DHCS BHIN 23-025 — Mobile Crisis Services.
 - DHCS BHIN 23-054 — MAT.
 - W&I § 14184.402; 42 U.S.C. § 1396d(r); 42 CFR § 438.208; 42 CFR § 440.169.
+- DHCS SMHS, DMC State Plan, and DMC-ODS Billing Manuals, version 4.0, SFY 2026-27.
+- DHCS SMHS, DMC State Plan, and DMC-ODS Service Tables, SFY 2026-27.
+- DHCS County Claims Customer Services Library: https://www.dhcs.ca.gov/services/mental-health-services-division-default/county-claims-customer-services-library/
 - BHIN Library (always check for newer): https://www.dhcs.ca.gov/formsandpubs/Pages/Behavioral-Health-Information-Notice-(BHIN)-Library.aspx
+
+**Non-normative watch item:** Draft BHIN 26-0XX — Medi-Cal Claiming for EBPs, FSP Services, and BHSS Early Intervention. Track for final publication; do not encode the draft table.
 
 **Practical guidance:**
 
