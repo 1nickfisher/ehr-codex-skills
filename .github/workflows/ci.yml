@@ -1,0 +1,29 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: python -m pip install -r skills/calmhsa-medi-cal-documentation/scripts/requirements.txt
+
+      - name: Verify source checker copies match
+        run: cmp skills/calmhsa-medi-cal-documentation/scripts/check_sources.py skills/42-cfr-part-2/scripts/check_sources.py
+
+      - name: Run tests
+        run: python -m unittest discover -s tests -v
