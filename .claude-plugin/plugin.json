@@ -1,7 +1,7 @@
 {
   "name": "ehr-codex-skills",
-  "version": "0.1.0",
-  "description": "Agent Skills for EHR and behavioral-health software — regulatory, clinical-documentation, and operational gaps that general public skill collections don't cover well. Includes 42 CFR Part 2 (SUD confidentiality) and California Medi-Cal behavioral-health documentation.",
+  "version": "0.2.0",
+  "description": "Agent Skills for EHR and behavioral-health software — regulatory and clinical-documentation gaps that general public skill collections do not cover well.",
   "license": "MIT",
   "keywords": [
     "ehr",
@@ -15,6 +15,9 @@
     "42-cfr-part-2"
   ],
   "author": {
-    "name": "Nick Fisher"
-  }
+    "name": "Nick Fisher",
+    "url": "https://github.com/1nickfisher"
+  },
+  "homepage": "https://github.com/1nickfisher/ehr-codex-skills",
+  "repository": "https://github.com/1nickfisher/ehr-codex-skills"
 }

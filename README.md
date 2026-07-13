@@ -1,8 +1,8 @@
 # ehr-codex-skills
 
-Public Agent Skills for EHR and behavioral-health software — focused on regulatory, clinical-documentation, release, and operational gaps that general public skill collections do not cover well.
+A public Codex plugin and portable Agent Skills collection for EHR and behavioral-health software — focused on regulatory and clinical-documentation gaps that general public skill collections do not cover well.
 
-Each skill is a single `SKILL.md` (YAML frontmatter + markdown body) loadable by [Claude Code](https://github.com/anthropics/claude-code), Codex, Gemini CLI, Cursor, and any other [Agent Skills](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview)-compatible runtime.
+Each packaged skill has a `SKILL.md` plus supporting source metadata, checks, and host manifests. The skills are loadable by [Claude Code](https://github.com/anthropics/claude-code), Codex, Gemini CLI, Cursor, and other [Agent Skills](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview)-compatible runtimes.
 
 ## What's here
 
@@ -29,13 +29,33 @@ Skills for FHIR, generic ICD-10 lookup, NPI registry, and similar commodity heal
 
 ## Installing
 
-Three patterns work; all treat this repo as the source of truth. Pick by host.
+Use the native plugin installer where the host supports it. Symlinking or vendoring individual skills remains available for other runtimes.
 
 A symlink avoids duplicate local copies, but it does not update the Git checkout. Pull updates explicitly, then restart the host so it reloads the skill catalog:
 
 ```sh
 git -C /path/to/ehr-codex-skills pull --ff-only
 ```
+
+### Codex — install as a plugin (recommended)
+
+The repository includes a Codex manifest and marketplace catalog, so the complete collection can be installed as one versioned plugin:
+
+```sh
+codex plugin marketplace add 1nickfisher/ehr-codex-skills --ref main
+codex plugin add ehr-codex-skills@ehr-codex-skills
+```
+
+Start a new Codex task after installation so the bundled skills are discovered.
+
+Codex installs a cached plugin snapshot. Pushing new repository content does not replace that snapshot automatically: every published plugin change must bump the version in both plugin manifests. Then refresh and reinstall:
+
+```sh
+codex plugin marketplace upgrade ehr-codex-skills
+codex plugin add ehr-codex-skills@ehr-codex-skills
+```
+
+Start another new task after updating.
 
 ### Claude Code — install as a plugin (recommended)
 
@@ -45,15 +65,15 @@ A `.claude-plugin/plugin.json` ships at the repo root, so the entire collection 
 # Local clone
 /plugin install /path/to/ehr-codex-skills
 
-# Or from a remote once the repo is published
-/plugin install <git-url>
+# Or from GitHub
+/plugin install https://github.com/1nickfisher/ehr-codex-skills.git
 ```
 
 Claude Code reads each skill's SKILL.md frontmatter (`name` + `description`) for trigger decisions. Restart Claude Code after install so the skill catalog refreshes.
 
-### Codex — symlink (or whatever your install path expects)
+### Codex — symlink individual skills (alternative)
 
-The `agents/openai.yaml` per skill provides Codex's interface manifest (display name, default prompt, implicit-invocation policy). Symlink each skill directory in:
+The `agents/openai.yaml` per skill provides Codex's interface manifest (display name, default prompt, implicit-invocation policy). If plugin installation is unavailable, symlink each skill directory instead:
 
 ```sh
 ln -s "$(pwd)/skills/calmhsa-medi-cal-documentation" \
