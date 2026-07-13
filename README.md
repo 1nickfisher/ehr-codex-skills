@@ -48,28 +48,21 @@ codex plugin add ehr-codex-skills@ehr-codex-skills
 
 Start a new Codex task after installation so the bundled skills are discovered.
 
-Codex installs a cached plugin snapshot. Pushing new repository content does not replace that snapshot automatically: every published plugin change must bump the version in both plugin manifests. Then refresh and reinstall:
+Codex installs a cached plugin snapshot. Pushing new repository content does not replace that snapshot automatically: every change that must reach installed plugin snapshots must bump the version in both plugin manifests. Then refresh the marketplace installation:
 
 ```sh
 codex plugin marketplace upgrade ehr-codex-skills
-codex plugin add ehr-codex-skills@ehr-codex-skills
 ```
 
 Start another new task after updating.
 
-### Claude Code — install as a plugin (recommended)
+### Claude Code — manifest compatibility
 
-A `.claude-plugin/plugin.json` ships at the repo root, so the entire collection installs in one step. Skills under `skills/` are auto-discovered:
+A `.claude-plugin/plugin.json` ships at the repo root and validates the collection as a Claude Code plugin. This repository does not yet publish a Claude marketplace catalog, so it does not claim a direct `/plugin install` command. Until that catalog is added and tested, use the single-skill symlink flow below.
 
 ```sh
-# Local clone
-/plugin install /path/to/ehr-codex-skills
-
-# Or from GitHub
-/plugin install https://github.com/1nickfisher/ehr-codex-skills.git
+claude plugin validate .
 ```
-
-Claude Code reads each skill's SKILL.md frontmatter (`name` + `description`) for trigger decisions. Restart Claude Code after install so the skill catalog refreshes.
 
 ### Codex — symlink individual skills (alternative)
 
