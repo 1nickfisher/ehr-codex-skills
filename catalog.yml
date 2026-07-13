@@ -1,6 +1,6 @@
 schema_version: 1
 name: ehr-codex-skills
-visibility: private
+visibility: public
 description: "Reusable Codex skills for EHR, behavioral-health, and Medi-Cal software work."
 
 skills:

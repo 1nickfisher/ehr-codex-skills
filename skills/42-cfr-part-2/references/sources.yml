@@ -261,10 +261,10 @@ sources:
     title: "Federal Register API metadata for 2024-02544"
     issuer: Federal Register
     type: regulatory
-    url: https://www.federalregister.gov/api/v1/documents/2024-02544.json
-    notes: "Stable JSON metadata: citation, dates, agencies, RIN, html_url, pdf_url."
-    expected_sha256: eb9a2defb655bd41c4d6891d51f3f1f71e774dd62fe33e4e51e1fd27705b6b01
-    last_verified_date: 2026-06-18
+    url: "https://www.federalregister.gov/api/v1/documents/2024-02544.json?fields[]=document_number&fields[]=citation&fields[]=publication_date&fields[]=effective_on&fields[]=agencies&fields[]=regulation_id_numbers&fields[]=html_url&fields[]=pdf_url"
+    notes: "Projected JSON metadata excludes volatile page-view fields while tracking the document number, citation, dates, agencies, RIN, and canonical document URLs."
+    expected_sha256: 37a839f4dbaab6b90b7bdba67d96fbceb3733d444c05daddf9384fd78242d84f
+    last_verified_date: 2026-07-12
 
   - id: govinfo-cfr-2024-part-2
     title: "Annual CFR 2024 Edition — Title 42 Vol. 1 Part 2 (XML)"

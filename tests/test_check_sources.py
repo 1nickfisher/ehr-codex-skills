@@ -17,6 +17,13 @@ SCRIPT_PATH = (
     / "scripts"
     / "check_sources.py"
 )
+PART_2_SCRIPT_PATH = (
+    REPO_ROOT
+    / "skills"
+    / "42-cfr-part-2"
+    / "scripts"
+    / "check_sources.py"
+)
 
 
 def load_checker():
@@ -239,6 +246,58 @@ class WaybackSourceTests(unittest.TestCase):
         self.assertEqual(report["changes"][0]["status"], "changed")
         self.assertEqual(report["changes"][0]["ecfr_date"], "2026-05-20")
         self.assertIn("new_hash", report["changes"][0])
+
+    def test_report_distinguishes_listed_automated_and_manual_sources(self):
+        checker = load_checker()
+        body = b"stable source body"
+        skill_dir = self.write_skill(
+            [
+                {
+                    "id": "automated-source",
+                    "type": "guidance",
+                    "url": "https://example.test/source",
+                    "expected_sha256": hashlib.sha256(body).hexdigest(),
+                },
+                {
+                    "id": "manual-source",
+                    "type": "manual",
+                    "url": "https://example.test/manual",
+                },
+            ]
+        )
+
+        with mock.patch.object(
+            checker,
+            "urlopen",
+            return_value=FakeResponse(body, {"Content-Type": "text/plain"}, 200),
+        ):
+            report = checker.check_skill(skill_dir)
+
+        self.assertEqual(report["listed"], 2)
+        self.assertEqual(report["automated_checked"], 1)
+        self.assertEqual(report["manual_review"], 1)
+        self.assertEqual(report["changes"], [])
+        rendered = checker.render_markdown([report])
+        self.assertIn("- sources listed: 2", rendered)
+        self.assertIn("- automated checks run: 1", rendered)
+        self.assertIn("- manual-review sources: 1", rendered)
+        self.assertIn("- status: **automated sources unchanged**", rendered)
+        self.assertIn(
+            "  status: automated sources unchanged",
+            checker.render_text([report]),
+        )
+
+        automated_only_report = {
+            **report,
+            "listed": 1,
+            "manual_review": 0,
+        }
+        automated_only_rendered = checker.render_markdown([automated_only_report])
+        self.assertIn("- status: **unchanged**", automated_only_rendered)
+        self.assertNotIn("automated sources unchanged", automated_only_rendered)
+
+    def test_skill_checker_copies_are_byte_identical(self):
+        self.assertEqual(SCRIPT_PATH.read_bytes(), PART_2_SCRIPT_PATH.read_bytes())
 
 
 if __name__ == "__main__":

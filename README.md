@@ -1,6 +1,6 @@
 # ehr-codex-skills
 
-Private Agent Skills for EHR and behavioral-health software — focused on regulatory, clinical-documentation, release, and operational gaps that general public skill collections do not cover well.
+Public Agent Skills for EHR and behavioral-health software — focused on regulatory, clinical-documentation, release, and operational gaps that general public skill collections do not cover well.
 
 Each skill is a single `SKILL.md` (YAML frontmatter + markdown body) loadable by [Claude Code](https://github.com/anthropics/claude-code), Codex, Gemini CLI, Cursor, and any other [Agent Skills](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview)-compatible runtime.
 
@@ -29,7 +29,13 @@ Skills for FHIR, generic ICD-10 lookup, NPI registry, and similar commodity heal
 
 ## Installing
 
-Three patterns work; all treat this repo as the source of truth and avoid the stale-copy problem. Pick by host:
+Three patterns work; all treat this repo as the source of truth. Pick by host.
+
+A symlink avoids duplicate local copies, but it does not update the Git checkout. Pull updates explicitly, then restart the host so it reloads the skill catalog:
+
+```sh
+git -C /path/to/ehr-codex-skills pull --ff-only
+```
 
 ### Claude Code — install as a plugin (recommended)
 
@@ -85,8 +91,10 @@ Compliance content rots silently — a regulation changes, the prose stays the s
 
 1. Every skill carries a `last_verified` date in its frontmatter metadata.
 2. Every skill has a companion `references/sources.yml` enumerating the regulatory authorities it depends on, with a baseline for each automatable source.
-3. `skills/<name>/scripts/check_sources.py` fetches each authority, compares baselines, and reports changes.
-4. A weekly GitHub Action runs the check and **opens an issue** when an authority changes — it never auto-edits a skill. A human reads the new authority and decides what (if anything) needs updating.
+3. `skills/<name>/scripts/check_sources.py` checks each automatable authority, compares baselines, and reports changes. Sources marked `type: manual` remain on the human-review list.
+4. A weekly GitHub Action runs the monitoring check and **opens or updates an issue** when an automatable authority changes. It never auto-edits a skill or pulls updates into installed clones; a human reads the new authority and decides what (if anything) needs updating.
+
+Current coverage is 19 automated and 5 manual-review sources for `42-cfr-part-2`, and 6 automated and 12 manual-review sources for `calmhsa-medi-cal-documentation`.
 
 Supported source types:
 

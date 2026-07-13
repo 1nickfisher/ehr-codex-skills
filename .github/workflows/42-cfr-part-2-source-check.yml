@@ -2,9 +2,9 @@ name: 42 CFR Part 2 source check
 
 on:
   schedule:
-    # Mondays at 14:05 UTC — staggered 5 min after CalMHSA so issue creation
-    # and any email alerts arrive in a predictable order.
-    - cron: "5 14 * * 1"
+    # Mondays at 14:37 UTC — staggered after CalMHSA and away from the
+    # top-of-hour Actions traffic spike.
+    - cron: "37 14 * * 1"
   workflow_dispatch:
     inputs:
       request_wayback_save:
@@ -24,9 +24,9 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
@@ -75,15 +75,32 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          gh label create "source-change" \
+            --color "B60205" \
+            --description "An authority cited by a skill needs human review" \
+            --force
+
           today=$(date -u +%Y-%m-%d)
-          issue_url=$(gh issue create \
-            --title "42 CFR Part 2 source change detected — ${today}" \
-            --body-file /tmp/issue.md \
-            --label "source-change")
+          issue_url=$(gh issue list \
+            --state open \
+            --limit 100 \
+            --json title,url \
+            --jq 'map(select(.title | startswith("42 CFR Part 2 source change detected — "))) | .[0].url // ""')
+
+          if [ -n "$issue_url" ]; then
+            gh issue edit "$issue_url" --add-label "source-change"
+            gh issue comment "$issue_url" --body-file /tmp/issue.md
+          else
+            issue_url=$(gh issue create \
+              --title "42 CFR Part 2 source change detected — ${today}" \
+              --body-file /tmp/issue.md \
+              --label "source-change")
+          fi
+
           echo "issue_url=${issue_url}" >> "$GITHUB_OUTPUT"
 
       - name: Send email alert
-        if: steps.check.outputs.exit_code == '2'
+        if: always() && steps.check.outputs.exit_code == '2'
         env:
           SMTP_HOST: ${{ secrets.SOURCE_ALERT_SMTP_HOST }}
           SMTP_PORT: ${{ secrets.SOURCE_ALERT_SMTP_PORT }}
@@ -160,3 +177,11 @@ jobs:
 
           print(f"Email alert sent to {alert_to}")
           PY
+
+      - name: Fail on unexpected checker exit
+        if: always() && steps.check.outputs.exit_code != '0' && steps.check.outputs.exit_code != '2'
+        env:
+          CHECK_EXIT_CODE: ${{ steps.check.outputs.exit_code }}
+        run: |
+          echo "Source checker returned unexpected exit code: ${CHECK_EXIT_CODE:-missing}"
+          exit 1

@@ -2,9 +2,10 @@
 """Check that the authorities a skill cites haven't changed since last review.
 
 Each skill directory contains a `references/sources.yml` enumerating the regulatory
-authorities the skill is grounded in. This script fetches each authority,
-computes a SHA-256 hash plus HTTP ETag / Last-Modified, and reports whether
-anything has changed since the last recorded baseline.
+authorities the skill is grounded in. This script fetches each automatable
+authority, computes a SHA-256 hash plus HTTP ETag / Last-Modified, and reports
+whether anything has changed since the last recorded baseline. Sources marked
+`type: manual` remain part of the report but require human review.
 
 By design, the script never edits the SKILL.md body — only `references/sources.yml`,
 and only with `--write`. Compliance content needs a human to read a changed
@@ -280,6 +281,8 @@ def check_skill(
     sources = data.get("sources") or []
     today = date.today().isoformat()
     changes: list[dict] = []
+    automated_checked = 0
+    manual_review = 0
 
     for src in sources:
         url = src.get("url")
@@ -287,10 +290,13 @@ def check_skill(
 
         if src.get("type") == "manual":
             # Some authorities are not fetchable (paywalled, login-gated,
-            # bot-protected, statute in an aspx viewer). Skip but count as
-            # checked — the source-of-truth is the cited human-review
-            # process, not an automated hash.
+            # bot-protected, statute in an aspx viewer). Track these separately:
+            # the source-of-truth is the cited human-review process, not an
+            # automated hash.
+            manual_review += 1
             continue
+
+        automated_checked += 1
 
         if src.get("type") == "wayback":
             try:
@@ -385,7 +391,9 @@ def check_skill(
     return {
         "skill": skill_dir.name,
         "path": str(skill_dir),
-        "checked": len(sources),
+        "listed": len(sources),
+        "automated_checked": automated_checked,
+        "manual_review": manual_review,
         "changes": changes,
     }
 
@@ -397,9 +405,14 @@ def render_markdown(reports: list[dict]) -> str:
         if "error" in r:
             lines.append(f"- **error**: {r['error']}")
             continue
-        lines.append(f"- sources checked: {r['checked']}")
+        lines.append(f"- sources listed: {r['listed']}")
+        lines.append(f"- automated checks run: {r['automated_checked']}")
+        lines.append(f"- manual-review sources: {r['manual_review']}")
         if not r["changes"]:
-            lines.append("- status: **unchanged**")
+            if r["manual_review"]:
+                lines.append("- status: **automated sources unchanged**")
+            else:
+                lines.append("- status: **unchanged**")
             continue
         lines.append("- status: **changes detected**")
         for c in r["changes"]:
@@ -419,9 +432,14 @@ def render_text(reports: list[dict]) -> str:
         if "error" in r:
             lines.append(f"  error: {r['error']}")
             continue
-        lines.append(f"  sources checked: {r['checked']}")
+        lines.append(f"  sources listed: {r['listed']}")
+        lines.append(f"  automated checks run: {r['automated_checked']}")
+        lines.append(f"  manual-review sources: {r['manual_review']}")
         if not r["changes"]:
-            lines.append("  status: unchanged")
+            if r["manual_review"]:
+                lines.append("  status: automated sources unchanged")
+            else:
+                lines.append("  status: unchanged")
             continue
         lines.append("  status: changes detected")
         for c in r["changes"]:
