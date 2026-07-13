@@ -1,0 +1,43 @@
+{
+  "name": "ehr-codex-skills",
+  "version": "0.2.0",
+  "description": "Agent Skills for EHR and behavioral-health software — regulatory and clinical-documentation gaps that general public skill collections do not cover well.",
+  "author": {
+    "name": "Nick Fisher",
+    "url": "https://github.com/1nickfisher"
+  },
+  "homepage": "https://github.com/1nickfisher/ehr-codex-skills",
+  "repository": "https://github.com/1nickfisher/ehr-codex-skills",
+  "license": "MIT",
+  "keywords": [
+    "ehr",
+    "healthcare",
+    "behavioral-health",
+    "compliance",
+    "regulatory",
+    "medi-cal",
+    "samhsa",
+    "hipaa",
+    "42-cfr-part-2"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "EHR Codex Skills",
+    "shortDescription": "EHR compliance and documentation workflows",
+    "longDescription": "Apply cited 42 CFR Part 2 and California Medi-Cal behavioral-health documentation guidance when designing, reviewing, or changing EHR software.",
+    "developerName": "Nick Fisher",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/1nickfisher/ehr-codex-skills",
+    "defaultPrompt": [
+      "Use 42 CFR Part 2 guidance to review this EHR feature.",
+      "Review this workflow against California Medi-Cal documentation rules."
+    ],
+    "brandColor": "#0F766E",
+    "screenshots": []
+  }
+}
