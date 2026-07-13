@@ -24,11 +24,13 @@ import hashlib
 import json
 import re
 import sys
-from datetime import date
+from datetime import date, timedelta
+from io import BytesIO
 from pathlib import Path
 from urllib.parse import quote, urlencode
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
+from zipfile import BadZipFile, ZipFile
 
 try:
     import yaml
@@ -50,25 +52,51 @@ ECFR_VERSIONS_URL = "https://www.ecfr.gov/api/versioner/v1/versions"
 ECFR_FULL_URL = "https://www.ecfr.gov/api/versioner/v1/full"
 
 
+def is_xlsx_payload(body: bytes) -> bool:
+    """Return whether bytes are an OOXML workbook, not merely a PK-prefixed ZIP."""
+    try:
+        with ZipFile(BytesIO(body)) as workbook:
+            names = set(workbook.namelist())
+    except BadZipFile:
+        return False
+    return {"[Content_Types].xml", "xl/workbook.xml"}.issubset(names)
+
+
 def fetch(url: str, expected_type: str | None = None, timeout: int = 60) -> dict:
     """Fetch a URL and report content + headers.
 
-    Detects bot-protection wrappers: sites behind Imperva/Incapsula/Cloudflare
-    challenge pages return a small HTML JS challenge in place of the real
-    document, but with HTTP 200. If the URL is supposed to be a PDF and the
-    response is small HTML, surface that as `bot_protected` instead of
-    silently hashing the challenge page.
+    Detects bot-protection wrappers and unexpected document payloads. Sites
+    behind Imperva/Incapsula/Cloudflare can return an HTML JS challenge in
+    place of the real document with HTTP 200. A server can also label arbitrary
+    bytes as a PDF or workbook. Surface either condition instead of silently
+    hashing the wrong artifact.
     """
     req = Request(url, headers={"User-Agent": USER_AGENT})
     with urlopen(req, timeout=timeout) as resp:
         body = resp.read()
         content_type = (resp.headers.get("Content-Type") or "").lower()
 
-        bot_protected = (
-            url.lower().endswith(".pdf")
-            and "text/html" in content_type
-            and len(body) < 2048
+        expected_type = (expected_type or "").lower()
+        lower_body = body[:4096].lower()
+        challenge_markers = (
+            b"_incapsula_resource",
+            b"incapsula incident id",
+            b"cf-chl-",
+            b"cloudflare challenge",
         )
+        expected_document_returned_as_html = (
+            expected_type in {"pdf", "xlsx"} and "text/html" in content_type
+        )
+        bot_protected = (
+            "text/html" in content_type
+            and (
+                expected_document_returned_as_html
+                or any(marker in lower_body for marker in challenge_markers)
+            )
+        )
+        artifact_mismatch = (
+            expected_type == "pdf" and not body.lstrip().startswith(b"%PDF-")
+        ) or (expected_type == "xlsx" and not is_xlsx_payload(body))
 
         return {
             "status": resp.status,
@@ -78,6 +106,7 @@ def fetch(url: str, expected_type: str | None = None, timeout: int = 60) -> dict
             "sha256": hashlib.sha256(body).hexdigest(),
             "bytes": len(body),
             "bot_protected": bot_protected,
+            "artifact_mismatch": artifact_mismatch,
         }
 
 
@@ -280,15 +309,91 @@ def check_skill(
     data = yaml.safe_load(sources_path.read_text()) or {}
     sources = data.get("sources") or []
     today = date.today().isoformat()
+    today_date = date.fromisoformat(today)
     changes: list[dict] = []
     automated_checked = 0
     manual_review = 0
 
+    raw_manual_review_interval = (data.get("meta") or {}).get(
+        "manual_review_interval_days", 0
+    )
+    try:
+        manual_review_interval_days = int(raw_manual_review_interval or 0)
+        if manual_review_interval_days < 0:
+            raise ValueError
+    except (TypeError, ValueError):
+        manual_review_interval_days = 0
+        changes.append(
+            {
+                "id": "<catalog>",
+                "status": "invalid_manual_review_interval_days",
+                "manual_review_interval_days": str(raw_manual_review_interval),
+            }
+        )
+
     for src in sources:
         url = src.get("url")
         sid = src.get("id") or url or "<unknown>"
+        source_type = src.get("type")
 
-        if src.get("type") == "manual":
+        review_due_date = src.get("review_due_date")
+        if (
+            not review_due_date
+            and source_type == "manual"
+            and manual_review_interval_days
+        ):
+            last_verified_date = src.get("last_verified_date")
+            if last_verified_date:
+                try:
+                    review_due_date = (
+                        date.fromisoformat(str(last_verified_date))
+                        + timedelta(days=manual_review_interval_days)
+                    ).isoformat()
+                except ValueError:
+                    changes.append(
+                        {
+                            "id": sid,
+                            "status": "invalid_last_verified_date",
+                            "last_verified_date": str(last_verified_date),
+                        }
+                    )
+            else:
+                changes.append(
+                    {
+                        "id": sid,
+                        "status": "missing_manual_review_date",
+                        "note": "Set review_due_date or last_verified_date.",
+                    }
+                )
+        if review_due_date:
+            try:
+                if date.fromisoformat(str(review_due_date)) <= today_date:
+                    changes.append(
+                        {
+                            "id": sid,
+                            "status": "review_overdue",
+                            "review_due_date": str(review_due_date),
+                        }
+                    )
+            except ValueError:
+                changes.append(
+                    {
+                        "id": sid,
+                        "status": "invalid_review_due_date",
+                        "review_due_date": str(review_due_date),
+                    }
+                )
+
+        if src.get("status") == "draft" and src.get("normative") is not False:
+            changes.append(
+                {
+                    "id": sid,
+                    "status": "draft_marked_normative",
+                    "note": "Draft sources must set normative: false.",
+                }
+            )
+
+        if source_type == "manual":
             # Some authorities are not fetchable (paywalled, login-gated,
             # bot-protected, statute in an aspx viewer). Track these separately:
             # the source-of-truth is the cited human-review process, not an
@@ -331,7 +436,7 @@ def check_skill(
             continue
 
         try:
-            current = fetch(url)
+            current = fetch(url, expected_type=src.get("artifact_type"))
         except (URLError, HTTPError, TimeoutError) as e:
             changes.append({"id": sid, "status": "unreachable", "error": str(e)})
             continue
@@ -346,6 +451,19 @@ def check_skill(
                     "bytes": current["bytes"],
                     "note": "Server returned a JS-challenge page instead of the document. "
                     "Set type: manual and verify by hand, or point url at a stable mirror.",
+                }
+            )
+            continue
+
+        if current["artifact_mismatch"]:
+            changes.append(
+                {
+                    "id": sid,
+                    "status": "unexpected_artifact",
+                    "url": url,
+                    "expected_type": src.get("artifact_type"),
+                    "content_type": current["content_type"],
+                    "bytes": current["bytes"],
                 }
             )
             continue

@@ -7,9 +7,9 @@ skills:
   - id: calmhsa-medi-cal-documentation
     path: skills/calmhsa-medi-cal-documentation
     status: stable
-    version: v0.1.0
-    last_verified: 2026-05-26
-    summary: "California Medi-Cal behavioral health documentation rules for SMHS, DMC, and DMC-ODS workflows."
+    version: v0.2.0
+    last_verified: 2026-07-12
+    summary: "California Medi-Cal behavioral health documentation and current-year claim-linkage rules for SMHS, DMC, and DMC-ODS workflows."
     canonical_sources: skills/calmhsa-medi-cal-documentation/references/sources.yml
 
   - id: 42-cfr-part-2
@@ -21,9 +21,9 @@ skills:
     canonical_sources: skills/42-cfr-part-2/references/sources.yml
 
 planned:
-  - id: ehr-release-ops
-    summary: "Release, staging, and operational checks for EHR deployments."
-  - id: sccc-odoo-admin
-    summary: "Administrative workflows for SCCC-style Odoo EHR operations."
-  - id: medi-cal-claims
-    summary: "Medi-Cal behavioral-health claim logic, coding constraints, and audit checks."
+  - id: california-medi-cal-behavioral-health-claiming
+    summary: "Current-year code, unit, modifier, discipline, place-of-service, dependency, and lockout rules."
+  - id: california-bhsa-documentation
+    summary: "BHSA-funded FSP and BHSS documentation requirements and their Medi-Cal boundary."
+  - id: california-behavioral-health-privacy-consent
+    summary: "California privacy, consent, and data-sharing rules with explicit 42 CFR Part 2 interaction and human legal review."

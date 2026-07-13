@@ -1,6 +1,6 @@
 {
   "name": "ehr-codex-skills",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Agent Skills for EHR and behavioral-health software — regulatory and clinical-documentation gaps that general public skill collections do not cover well.",
   "license": "MIT",
   "keywords": [
