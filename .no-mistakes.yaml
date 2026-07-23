@@ -1,0 +1,11 @@
+# Governs only the full high-risk validation lane described in AGENTS.md.
+# The review-only lane selects skips at invocation time; the routine lane never invokes no-mistakes.
+disable_project_settings: true
+
+commands:
+  test: "python -m unittest discover -s tests -v"
+  lint: "cmp skills/calmhsa-medi-cal-documentation/scripts/check_sources.py skills/42-cfr-part-2/scripts/check_sources.py"
+
+test:
+  evidence:
+    store_in_repo: false
